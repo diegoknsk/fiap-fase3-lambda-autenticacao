@@ -19,12 +19,17 @@ public class AutenticacaoAdminUseCase : IAutenticacaoAdminUseCase
         _clientId   = Environment.GetEnvironmentVariable("COGNITO__CLIENTID")   ?? throw new InvalidOperationException("COGNITO__CLIENTID not set");
 
         _cognito = new AmazonCognitoIdentityProviderClient(RegionEndpoint.GetBySystemName(_region));
+        
+        // Log para debug
+        Console.WriteLine($"Cognito config - Region: {_region}, UserPoolId: {_userPoolId}, ClientId: {_clientId}");
     }
 
     public async Task<AdminLoginResponse> AutenticarAsync(AdminLoginRequest request)
     {
         try
         {
+            Console.WriteLine($"Tentando autenticar usuário: {request.Username}");
+            
             var authReq = new AdminInitiateAuthRequest
             {
                 UserPoolId = _userPoolId,
@@ -37,7 +42,9 @@ public class AutenticacaoAdminUseCase : IAutenticacaoAdminUseCase
                 }
             };
 
+            Console.WriteLine($"Enviando requisição para Cognito - UserPoolId: {_userPoolId}, ClientId: {_clientId}");
             var resp = await _cognito.AdminInitiateAuthAsync(authReq);
+            Console.WriteLine($"Resposta do Cognito recebida - Success: {resp.AuthenticationResult != null}");
 
             var ok = resp.AuthenticationResult != null && !string.IsNullOrEmpty(resp.AuthenticationResult.AccessToken);
             if (!ok)
@@ -58,8 +65,9 @@ public class AutenticacaoAdminUseCase : IAutenticacaoAdminUseCase
                 Message = "ok"
             };
         }
-        catch (NotAuthorizedException)
+        catch (NotAuthorizedException ex)
         {
+            Console.WriteLine($"NotAuthorizedException: {ex.Message}");
             return new AdminLoginResponse 
             { 
                 Success = false, 
@@ -67,8 +75,10 @@ public class AutenticacaoAdminUseCase : IAutenticacaoAdminUseCase
                 Message = "Usuário ou senha inválidos" 
             };
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine($"Exception: {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             return new AdminLoginResponse 
             { 
                 Success = false, 
