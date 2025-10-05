@@ -107,10 +107,16 @@ jobs:
         cd infra/terraform
         terraform init
 
-    - name: Import existing Lambda function
+    - name: Check if Lambda function exists
       run: |
         cd infra/terraform
-        terraform import aws_lambda_function.auth FastFoodAutenticacao || echo "Lambda function already imported or doesn't exist"
+        if aws lambda get-function --function-name FastFoodAutenticacao >/dev/null 2>&1; then
+          echo "Lambda function exists, will skip creation"
+          echo "LAMBDA_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "Lambda function does not exist, will create"
+          echo "LAMBDA_EXISTS=false" >> $GITHUB_ENV
+        fi
 
     - name: Terraform Plan
       run: |
@@ -120,7 +126,8 @@ jobs:
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
-          -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}"
+          -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
+          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}"
 
     - name: Terraform Apply
       run: |
@@ -130,7 +137,8 @@ jobs:
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
-          -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}"
+          -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
+          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}"
 
     - name: Get API Gateway URL
       id: get-url

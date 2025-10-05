@@ -46,3 +46,9 @@ variable "lab_role_arn" {
   default     = "arn:aws:iam::898384491704:role/LabRole"
 }
 
+variable "create_lambda" {
+  description = "Se deve criar a função Lambda (false se já existir)"
+  type        = bool
+  default     = true
+}
+

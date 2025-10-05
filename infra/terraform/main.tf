@@ -9,30 +9,7 @@ data "aws_region" "current" {}
 
 # Usar LabRole existente - não criamos políticas IAM
 
-# Lambda Function única com ASP.NET Core
-resource "aws_lambda_function" "auth" {
-  filename         = "${path.module}/../../package.zip"
-  function_name    = var.project_name
-  role            = var.lab_role_arn
-  handler         = "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync"
-  source_code_hash = filebase64sha256("${path.module}/../../package.zip")
-  runtime         = "dotnet8"
-  timeout         = 30
-  memory_size     = 512
-
-  environment {
-    variables = {
-      ASPNETCORE_ENVIRONMENT = "Production"
-      # Configuração JWT via variáveis de ambiente (simples)
-      JwtSettings__Secret = var.jwt_secret
-      JwtSettings__Issuer = var.jwt_issuer
-      JwtSettings__Audience = var.jwt_audience
-      JwtSettings__ExpirationHours = "3"
-    }
-  }
-
-  tags = var.tags
-}
+# Lambda Function movida para lambda.tf (criação condicional)
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "auth_api" {
