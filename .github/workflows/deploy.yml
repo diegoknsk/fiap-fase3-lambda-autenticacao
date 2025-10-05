@@ -3,8 +3,14 @@ name: Deploy to AWS
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
     inputs:
       branch:
