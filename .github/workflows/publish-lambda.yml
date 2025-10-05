@@ -80,11 +80,7 @@ jobs:
             --runtime "dotnet8" \
             --timeout 30 \
             --memory-size 512 \
-            --environment Variables='{
-              "COGNITO__REGION":"${{ vars.AWS_REGION }}",
-              "COGNITO__USERPOOLID":"${{ secrets.COGNITO_USER_POOL_ID }}",
-              "COGNITO__CLIENTID":"${{ secrets.COGNITO_CLIENT_ID }}"
-            }'
+            --environment Variables='{"COGNITO__REGION":"${{ vars.AWS_REGION }}","COGNITO__USERPOOLID":"${{ secrets.COGNITO_USER_POOL_ID }}","COGNITO__CLIENTID":"${{ secrets.COGNITO_CLIENT_ID }}"}'
 
       - name: Verificar deploy
         run: |
