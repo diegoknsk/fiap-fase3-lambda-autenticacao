@@ -1,4 +1,6 @@
 using FiapFastFoodAutenticacao.Contracts;
+using FiapFastFoodAutenticacao.Core.Repositories;
+using FiapFastFoodAutenticacao.Core.UseCases;
 using FiapFastFoodAutenticacao.Dtos;
 using FiapFastFoodAutenticacao.Services;
 
@@ -18,6 +20,13 @@ builder.Services.AddSwaggerGen(c =>
 // DI limitado ao DebugApi para injetar IAuthService
 builder.Services.AddSingleton<IAuthService, AuthService>(); // atual: mock; depois troca pelo real
 
+// DI para Customer endpoints
+builder.Services.AddSingleton<IUsuarioRepository, UsuarioRepositoryMock>();
+builder.Services.AddSingleton<ITokenService, TokenService>();
+builder.Services.AddSingleton<CustomerIdentifyUseCase>();
+builder.Services.AddSingleton<CustomerRegisterUseCase>();
+builder.Services.AddSingleton<CustomerRegisterAnonymousUseCase>();
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -34,7 +43,9 @@ app.MapGet("/", () => new {
     Description = "Esta API é apenas para debug local. A lógica de autenticação está 100% concentrada no projeto FiapFastFoodAutenticacao. Produção roda apenas a função Lambda.",
     Endpoints = new[] {
         "POST /autenticacaoAdmin - Autenticação Admin",
-        "POST /autenticacaoTotem - Autenticação Totem"
+        "POST /api/customer/identify - Identificar Customer por CPF",
+        "POST /api/customer/register - Registrar Customer",
+        "POST /api/customer/anonymous - Registrar Customer Anônimo"
     }
 });
 
@@ -58,23 +69,55 @@ app.MapPost("/autenticacaoAdmin", async (AdminLoginRequest req, IAuthService svc
 .WithName("AutenticacaoAdmin")
 .WithOpenApi();
 
-app.MapPost("/autenticacaoTotem", async (TotemIdentifyRequest req, IAuthService svc) =>
+// Customer endpoints
+app.MapPost("/api/customer/identify", async (CustomerIdentifyModel req, CustomerIdentifyUseCase identifyUseCase) =>
 {
     try
     {
-        var token = await svc.AutenticacaoTotemAsync(req);
-        return Results.Ok(token);
+        var result = await identifyUseCase.ExecuteAsync(req.Cpf);
+        return Results.Ok(ApiResponse<CustomerTokenResponseModel>.Ok(result));
     }
-    catch (UnauthorizedAccessException)
+    catch (UnauthorizedAccessException ex)
     {
-        return Results.Unauthorized();
+        return Results.Ok(ApiResponse<CustomerTokenResponseModel>.Error(ex.Message));
     }
     catch (Exception)
     {
         return Results.Problem("Erro interno do servidor");
     }
 })
-.WithName("AutenticacaoTotem")
+.WithName("CustomerIdentify")
 .WithOpenApi();
+
+app.MapPost("/api/customer/register", async (CustomerRegisterModel req, CustomerRegisterUseCase registerUseCase) =>
+{
+    try
+    {
+        var result = await registerUseCase.ExecuteAsync(req);
+        return Results.Ok(ApiResponse<CustomerTokenResponseModel>.Ok(result));
+    }
+    catch (Exception)
+    {
+        return Results.Problem("Erro interno do servidor");
+    }
+})
+.WithName("CustomerRegister")
+.WithOpenApi();
+
+app.MapPost("/api/customer/anonymous", async (CustomerRegisterAnonymousUseCase registerAnonymousUseCase) =>
+{
+    try
+    {
+        var result = await registerAnonymousUseCase.ExecuteAsync();
+        return Results.Ok(ApiResponse<CustomerTokenResponseModel>.Ok(result));
+    }
+    catch (Exception)
+    {
+        return Results.Problem("Erro interno do servidor");
+    }
+})
+.WithName("CustomerAnonymous")
+.WithOpenApi();
+
 
 app.Run();

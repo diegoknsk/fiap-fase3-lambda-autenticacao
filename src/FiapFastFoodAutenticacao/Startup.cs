@@ -1,4 +1,6 @@
 using FiapFastFoodAutenticacao.Contracts;
+using FiapFastFoodAutenticacao.Core.Repositories;
+using FiapFastFoodAutenticacao.Core.UseCases;
 using FiapFastFoodAutenticacao.Dtos;
 using FiapFastFoodAutenticacao.Services;
 using Microsoft.AspNetCore.Builder;
@@ -12,6 +14,7 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddControllers();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
         {
@@ -24,6 +27,13 @@ public class Startup
         
         // DI limitado - injetar IAuthService
         services.AddSingleton<IAuthService, AuthService>();
+        
+        // DI para Customer endpoints
+        services.AddSingleton<IUsuarioRepository, UsuarioRepositoryMock>();
+        services.AddSingleton<ITokenService, TokenService>();
+        services.AddSingleton<CustomerIdentifyUseCase>();
+        services.AddSingleton<CustomerRegisterUseCase>();
+        services.AddSingleton<CustomerRegisterAnonymousUseCase>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -39,6 +49,8 @@ public class Startup
         app.UseRouting();
         app.UseEndpoints(endpoints =>
         {
+            endpoints.MapControllers();
+            
             // Endpoint de status
             endpoints.MapGet("/", async context =>
             {

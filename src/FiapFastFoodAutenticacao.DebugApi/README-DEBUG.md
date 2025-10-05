@@ -16,15 +16,25 @@ Abra no navegador: **http://localhost:5000**
 ### 3. Endpoints Disponíveis
 
 #### Admin Handler
-- **POST** `/api/admin/login` - Login Admin (simula Lambda)
-- **POST** `/api/admin/test-valid` - Teste com credenciais válidas
-- **POST** `/api/admin/test-invalid` - Teste com credenciais inválidas
+- **POST** `/autenticacaoAdmin` - Login Admin (simula Lambda)
 
-#### Totem Handler  
-- **POST** `/api/totem/login` - Login Totem (simula Lambda)
-- **POST** `/api/totem/test-valid` - Teste com credenciais válidas
-- **POST** `/api/totem/test-invalid` - Teste com credenciais inválidas
-- **POST** `/api/totem/test-cpf-not-found` - Teste CPF não encontrado
+#### Customer Endpoints (Totem)
+**IMPORTANTE:** O antigo endpoint de autenticação do totem foi removido. Agora o totem usa os 3 endpoints de Customer:
+
+- **POST** `/api/customer/identify` - Identificar customer por CPF
+- **POST** `/api/customer/register` - Registrar novo customer  
+- **POST** `/api/customer/anonymous` - Registrar customer anônimo
+
+Todos os endpoints retornam `CustomerTokenResponseModel` com JWT token válido por 3 horas.
+
+#### Endpoints de Teste
+- **POST** `/test/admin/valid` - Teste Admin com credenciais válidas
+- **POST** `/test/admin/invalid` - Teste Admin com credenciais inválidas
+- **POST** `/test/customer/identify-valid` - Teste Identify com CPF válido
+- **POST** `/test/customer/identify-invalid` - Teste Identify com CPF inválido
+- **POST** `/test/customer/register-valid` - Teste Register com dados válidos
+- **POST** `/test/customer/register-existing` - Teste Register com CPF existente
+- **POST** `/test/customer/anonymous` - Teste Register Anonymous
 
 ## 🔍 Debug e Logs
 
@@ -39,31 +49,57 @@ A API simula **exatamente** como o AWS Lambda chama os handlers:
 
 ### Admin Login
 ```json
-POST /api/admin/login
+POST /autenticacaoAdmin
 {
-  "username": "admin",
+  "email": "admin@fiap.com",
   "password": "fiap@2025"
 }
 ```
 
-### Totem Login
+### Customer Identify
 ```json
-POST /api/totem/login
+POST /api/customer/identify
 {
-  "cpf": "12345678901",
-  "senha": "1234"
+  "cpf": "12345678901"
 }
+```
+
+### Customer Register
+```json
+POST /api/customer/register
+{
+  "name": "João Silva",
+  "email": "joao@email.com",
+  "cpf": "12345678901"
+}
+```
+
+### Customer Anonymous
+```json
+POST /api/customer/anonymous
+```
+
+### Testes Automáticos
+```json
+POST /test/admin/valid
+POST /test/admin/invalid
+POST /test/customer/identify-valid
+POST /test/customer/identify-invalid
+POST /test/customer/register-valid
+POST /test/customer/register-existing
+POST /test/customer/anonymous
 ```
 
 ## 🎯 Credenciais de Teste
 
 ### Admin (Mock Cognito)
-- **Username:** `admin`
+- **Email:** `admin@fiap.com`
 - **Password:** `fiap@2025`
 
-### Totem (Mock MySQL)
-- **CPF:** `12345678901`
-- **Senha:** `1234`
+### Customer (Mock MySQL)
+- **CPF:** `12345678901` (para identify)
+- **CPF:** Qualquer CPF válido (para register)
+- **Anonymous:** Sem parâmetros necessários
 
 ## 🔧 Diferença das Arquiteturas
 
