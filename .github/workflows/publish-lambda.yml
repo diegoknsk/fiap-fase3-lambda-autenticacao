@@ -28,24 +28,19 @@ jobs:
           aws-region: us-east-1
 
       - name: Restaurar dependências
-        run: dotnet restore
+        run: dotnet restore ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj
 
       - name: Compilar projeto
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --no-restore
 
-      - name: Publicar para Linux
-        run: |
-          dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj \
-            -c Release \
-            -r linux-x64 \
-            --self-contained false \
-            /p:GenerateRuntimeConfigurationFiles=true \
-            --no-build
+      - name: Publicar projeto
+        run: dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --output ./publish --no-build -p:PublishReadyToRun=false
 
       - name: Criar pacote ZIP
         run: |
-          cd ./src/FiapFastFoodAutenticacao/bin/Release/net8.0/linux-x64/publish
-          zip -r ../../../../../../package.zip .
+          cd publish
+          zip -r ../package.zip .
+          cd ..
 
       - name: Deploy para AWS Lambda
         run: |
