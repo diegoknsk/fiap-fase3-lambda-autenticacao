@@ -107,13 +107,27 @@ jobs:
         cd infra/terraform
         terraform init
 
+    - name: Check if Lambda function exists
+      run: |
+        cd infra/terraform
+        if aws lambda get-function --function-name FastFoodAutenticacao >/dev/null 2>&1; then
+          echo "Lambda function exists, will skip creation"
+          echo "LAMBDA_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "Lambda function does not exist, will create"
+          echo "LAMBDA_EXISTS=false" >> $GITHUB_ENV
+        fi
+
     - name: Terraform Plan
       run: |
         cd infra/terraform
         terraform plan \
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
-          -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}"
+          -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
+          -var="aws_region=${{ vars.AWS_REGION }}" \
+          -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
+          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}"
 
     - name: Terraform Apply
       run: |
@@ -121,7 +135,10 @@ jobs:
         terraform apply -auto-approve \
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
-          -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}"
+          -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
+          -var="aws_region=${{ vars.AWS_REGION }}" \
+          -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
+          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}"
 
     - name: Get API Gateway URL
       id: get-url
@@ -130,6 +147,19 @@ jobs:
         API_URL=$(terraform output -raw api_gateway_url)
         echo "api_url=$API_URL" >> $GITHUB_OUTPUT
         echo "🚀 API deployed at: $API_URL"
+
+    - name: Get Cognito outputs
+      id: get-cognito
+      run: |
+        cd infra/terraform
+        COGNITO_USER_POOL_ID=$(terraform output -raw cognito_user_pool_id)
+        COGNITO_APP_CLIENT_ID=$(terraform output -raw cognito_app_client_id)
+        COGNITO_JWKS_URL=$(terraform output -raw cognito_jwks_url)
+        echo "cognito_user_pool_id=$COGNITO_USER_POOL_ID" >> $GITHUB_OUTPUT
+        echo "cognito_app_client_id=$COGNITO_APP_CLIENT_ID" >> $GITHUB_OUTPUT
+        echo "cognito_jwks_url=$COGNITO_JWKS_URL" >> $GITHUB_OUTPUT
+        echo "🔐 Cognito User Pool ID: $COGNITO_USER_POOL_ID"
+        echo "🔐 Cognito App Client ID: $COGNITO_APP_CLIENT_ID"
 
     - name: Comment PR with deployment info
       if: github.event_name == 'pull_request'
