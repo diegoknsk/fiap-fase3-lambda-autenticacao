@@ -1,0 +1,133 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AWS_REGION: us-east-1
+  TERRAFORM_VERSION: 1.6.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj
+
+    - name: Build
+      run: dotnet build ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --output ./publish --no-build
+
+    - name: Create deployment package
+      run: |
+        cd publish
+        zip -r ../package.zip .
+        cd ..
+
+    - name: Upload package
+      uses: actions/upload-artifact@v4
+      with:
+        name: lambda-package
+        path: package.zip
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download package
+      uses: actions/download-artifact@v4
+      with:
+        name: lambda-package
+        path: .
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Terraform Init
+      run: |
+        cd infra/terraform
+        terraform init
+
+    - name: Terraform Plan
+      run: |
+        cd infra/terraform
+        terraform plan \
+          -var="db_connection_string=${{ secrets.DB_CONNECTION_STRING }}" \
+          -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+          -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
+          -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}"
+
+    - name: Terraform Apply
+      run: |
+        cd infra/terraform
+        terraform apply -auto-approve \
+          -var="db_connection_string=${{ secrets.DB_CONNECTION_STRING }}" \
+          -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+          -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
+          -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}"
+
+    - name: Get API Gateway URL
+      id: get-url
+      run: |
+        cd infra/terraform
+        API_URL=$(terraform output -raw api_gateway_url)
+        echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+        echo "🚀 API deployed at: $API_URL"
+
+    - name: Comment PR with deployment info
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const apiUrl = '${{ steps.get-url.outputs.api_url }}';
+          const comment = `## 🚀 Deployment Preview
+          
+          **API URL:** ${apiUrl}
+          
+          ### Endpoints disponíveis:
+          - \`POST ${apiUrl}/autenticacaoAdmin\` - Autenticação Admin
+          - \`POST ${apiUrl}/api/customer/identify\` - Identificar Customer
+          - \`POST ${apiUrl}/api/customer/register\` - Registrar Customer
+          - \`POST ${apiUrl}/api/customer/anonymous\` - Registrar Customer Anônimo
+          - \`GET ${apiUrl}/swagger\` - Documentação Swagger
+          
+          ### Teste rápido:
+          \`\`\`bash
+          curl ${apiUrl}/
+          \`\`\`
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
