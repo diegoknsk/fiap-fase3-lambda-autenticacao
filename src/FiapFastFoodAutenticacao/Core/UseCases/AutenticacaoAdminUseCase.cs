@@ -22,6 +22,7 @@ public class AutenticacaoAdminUseCase : IAutenticacaoAdminUseCase
         
         // Log para debug
         Console.WriteLine($"Cognito config - Region: {_region}, UserPoolId: {_userPoolId}, ClientId: {_clientId}");
+        Console.WriteLine("Lambda updated with new Cognito configuration");
     }
 
     public async Task<AdminLoginResponse> AutenticarAsync(AdminLoginRequest request)
