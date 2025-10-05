@@ -114,6 +114,9 @@ aws cognito-idp admin-set-user-password \
   --permanent \
   --region ${var.aws_region}
 EOT
+    environment = {
+      AWS_DEFAULT_REGION = var.aws_region
+    }
   }
 
   depends_on = [aws_cognito_user.admin_user]
