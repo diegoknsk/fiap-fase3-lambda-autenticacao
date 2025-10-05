@@ -71,6 +71,10 @@ jobs:
     - name: Verify AWS secrets
       run: |
         echo "Checking AWS secrets..."
+        echo "AWS_ACCESS_KEY_ID length: ${#AWS_ACCESS_KEY_ID}"
+        echo "AWS_SECRET_ACCESS_KEY length: ${#AWS_SECRET_ACCESS_KEY}"
+        echo "AWS_SESSION_TOKEN length: ${#AWS_SESSION_TOKEN}"
+        
         if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
           echo "❌ AWS_ACCESS_KEY_ID is empty"
           exit 1
