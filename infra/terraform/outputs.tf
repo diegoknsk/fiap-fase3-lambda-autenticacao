@@ -10,12 +10,12 @@ output "lambda_function_arn" {
 
 output "api_gateway_url" {
   description = "URL do API Gateway"
-  value       = "https://${aws_api_gateway_rest_api.auth_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_api_gateway_stage.auth_stage.stage_name}"
+  value       = var.create_lambda ? "https://${aws_api_gateway_rest_api.auth_api[0].id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_api_gateway_stage.auth_stage[0].stage_name}" : "API Gateway not created (Lambda exists)"
 }
 
 output "api_gateway_id" {
   description = "ID do API Gateway"
-  value       = aws_api_gateway_rest_api.auth_api.id
+  value       = var.create_lambda ? aws_api_gateway_rest_api.auth_api[0].id : "API Gateway not created (Lambda exists)"
 }
 
 # Secrets removidos - usando variáveis de ambiente simples
