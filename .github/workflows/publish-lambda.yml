@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'src/**'
-      - '.github/workflows/publish-lambda.yml'
   workflow_dispatch:
 
 jobs:
