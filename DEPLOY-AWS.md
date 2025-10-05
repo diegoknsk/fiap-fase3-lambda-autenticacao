@@ -39,11 +39,11 @@ aws sts get-caller-identity
 
 #### 2. Push para Deploy
 ```bash
-# Deploy para desenvolvimento
-git push origin dev
-
-# Deploy para produção
+# Deploy automático para produção (apenas main)
 git push origin main
+
+# Para desenvolvimento, use dev (apenas build, sem deploy)
+git push origin dev
 ```
 
 ### **Opção 2: Deploy Manual**

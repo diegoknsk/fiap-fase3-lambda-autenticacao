@@ -35,8 +35,8 @@ public class CustomerRegisterUseCase
         var newUsuario = new Core.Models.Usuario
         {
             Id = Guid.NewGuid(),
-            Nome = request.Name,
-            Email = request.Email,
+            Nome = $"Cliente {request.Cpf.Substring(0, 3)}***", // Nome baseado no CPF
+            Email = $"cliente_{request.Cpf}@temp.com", // Email temporário baseado no CPF
             Cpf = request.Cpf,
             Senha = "1234" // Mock - em produção seria hash da senha
         };

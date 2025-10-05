@@ -47,4 +47,4 @@ gh secret set AWS_SESSION_TOKEN --body $SessionToken --repo $Repository
 
 Write-Host "✅ Credenciais atualizadas com sucesso!" -ForegroundColor Green
 Write-Host "🚀 Agora você pode fazer push para deploy:" -ForegroundColor Cyan
-Write-Host "   git push origin dev" -ForegroundColor White
+Write-Host "   git push origin main" -ForegroundColor White

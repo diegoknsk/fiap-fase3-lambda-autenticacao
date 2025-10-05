@@ -98,9 +98,9 @@ Para facilitar a renovação das credenciais, use os scripts:
 ## 🚀 Como Funciona o Deploy
 
 ### **Trigger Automático**
-- **Push para `main`** → Deploy para produção
-- **Push para `dev`** → Deploy para desenvolvimento
-- **Pull Request** → Preview do deploy (comentário na PR)
+- **Push para `main`** → Deploy automático para produção
+- **Pull Request para `main`** → Preview do deploy (comentário na PR)
+- **Push para `dev`** → Apenas build (sem deploy)
 
 ### **Processo de Deploy**
 1. **Build** - Compila o projeto .NET

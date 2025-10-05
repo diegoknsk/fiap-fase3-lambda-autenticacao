@@ -45,4 +45,4 @@ gh secret set AWS_SESSION_TOKEN --body "$SESSION_TOKEN" --repo "$REPOSITORY"
 
 echo "✅ Credenciais atualizadas com sucesso!"
 echo "🚀 Agora você pode fazer push para deploy:"
-echo "   git push origin dev"
+echo "   git push origin main"
