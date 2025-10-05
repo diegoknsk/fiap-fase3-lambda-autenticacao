@@ -132,8 +132,8 @@ jobs:
     - name: Verify new infrastructure
       run: |
         echo "🔍 Verificando nova infraestrutura..."
-        aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text
-        aws apigateway get-rest-apis --query 'items[?name==`FiapFastFoodAutenticacao-api`]' --output table
+        aws lambda get-function --function-name FastFoodAutenticacao --query 'Configuration.State' --output text
+        aws apigateway get-rest-apis --query 'items[?name==`FastFoodAutenticacao-api`]' --output table
 
     - name: Test endpoints
       run: |

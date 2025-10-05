@@ -1,7 +1,7 @@
 variable "project_name" {
   description = "Nome do projeto"
   type        = string
-  default     = "FiapFastFoodAutenticacao"
+  default     = "FastFoodAutenticacao"
 }
 
 variable "environment" {
@@ -14,7 +14,7 @@ variable "tags" {
   description = "Tags padrão para os recursos"
   type        = map(string)
   default = {
-    Project     = "FiapFastFoodAutenticacao"
+    Project     = "FastFoodAutenticacao"
     Environment = "dev"
     ManagedBy   = "terraform"
   }
