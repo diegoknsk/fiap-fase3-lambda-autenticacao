@@ -14,18 +14,24 @@ Para configurar o deploy automático via GitHub Actions, você precisa adicionar
 
 ### 📝 Lista de Secrets
 
-#### **AWS Credentials**
+#### **AWS Credentials (AWS Academy)**
 ```
 AWS_ACCESS_KEY_ID
 ```
-- **Descrição:** Access Key ID da AWS
-- **Exemplo:** `AKIAIOSFODNN7EXAMPLE`
+- **Descrição:** Access Key ID temporária da AWS Academy
+- **Exemplo:** `ASIAIOSFODNN7EXAMPLE`
 
 ```
 AWS_SECRET_ACCESS_KEY
 ```
-- **Descrição:** Secret Access Key da AWS
+- **Descrição:** Secret Access Key temporária da AWS Academy
 - **Exemplo:** `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
+
+```
+AWS_SESSION_TOKEN
+```
+- **Descrição:** Session Token temporário da AWS Academy
+- **Exemplo:** `IQoJb3JpZ2luX2VjE...` (token longo)
 
 #### **Database Configuration**
 ```
@@ -52,6 +58,42 @@ JWT_AUDIENCE
 ```
 - **Descrição:** Audience para JWT tokens
 - **Exemplo:** `FiapFastFood`
+
+## 🎓 AWS Academy - Configuração Especial
+
+### **⚠️ Importante para AWS Academy:**
+- As credenciais da AWS Academy são **temporárias** (expira em algumas horas)
+- Você precisará **renovar as credenciais** periodicamente
+- O **Session Token** é obrigatório para AWS Academy
+
+### **🔄 Renovação de Credenciais:**
+1. Acesse seu **AWS Academy Learner Lab**
+2. Clique em **"AWS Details"** → **"Show"**
+3. Copie as novas credenciais
+4. Atualize os secrets no GitHub:
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_SESSION_TOKEN`
+
+### **⏰ Dica:**
+- Configure um lembrete para renovar as credenciais
+- As credenciais expiram automaticamente
+- Sem credenciais válidas, o deploy falhará
+
+### **🛠️ Scripts de Atualização:**
+Para facilitar a renovação das credenciais, use os scripts:
+
+#### **Windows PowerShell:**
+```powershell
+.\scripts\update-aws-credentials.ps1 -AccessKeyId "ASIA..." -SecretAccessKey "wJalr..." -SessionToken "IQoJb3JpZ2luX2VjE..."
+```
+
+#### **Linux/Mac:**
+```bash
+./scripts/update-aws-credentials.sh ASIA... wJalr... IQoJb3JpZ2luX2VjE...
+```
+
+**Pré-requisito:** Instalar GitHub CLI (`gh`) e fazer login
 
 ## 🚀 Como Funciona o Deploy
 
