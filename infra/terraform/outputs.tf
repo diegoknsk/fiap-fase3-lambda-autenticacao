@@ -38,7 +38,7 @@ output "jwt_secret_name" {
   value       = aws_secretsmanager_secret.jwt_settings.name
 }
 
-output "iam_role_arn" {
-  description = "ARN da IAM Role do Lambda"
-  value       = aws_iam_role.lambda_exec.arn
+output "lab_role_arn" {
+  description = "ARN da LabRole usada pela Lambda"
+  value       = var.lab_role_arn
 }

@@ -44,3 +44,9 @@ variable "jwt_audience" {
   default     = "FiapFastFood"
 }
 
+variable "lab_role_arn" {
+  description = "ARN da LabRole da AWS Academy"
+  type        = string
+  default     = "arn:aws:iam::898384491704:role/LabRole"
+}
+
