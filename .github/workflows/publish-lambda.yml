@@ -1,0 +1,66 @@
+name: Deploy Lambda Function
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Configurar credenciais da AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Compilar projeto
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publicar para Linux
+        run: |
+          dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained false \
+            /p:GenerateRuntimeConfigurationFiles=true \
+            --no-build
+
+      - name: Criar pacote ZIP
+        run: |
+          cd ./src/FiapFastFoodAutenticacao/bin/Release/net8.0/linux-x64/publish
+          zip -r ../../../../../../package.zip .
+
+      - name: Deploy para AWS Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name FiapFastFoodAutenticacao \
+            --zip-file fileb://package.zip
+
+      - name: Atualizar configuração da função
+        run: |
+          aws lambda update-function-configuration \
+            --function-name FiapFastFoodAutenticacao \
+            --handler "FiapFastFoodAutenticacao::LambdaEntryPoint::FunctionHandlerAsync" \
+            --runtime "dotnet8" \
+            --timeout 30 \
+            --memory-size 512
+
+      - name: Verificar deploy
+        run: |
+          aws lambda get-function --function-name FiapFastFoodAutenticacao

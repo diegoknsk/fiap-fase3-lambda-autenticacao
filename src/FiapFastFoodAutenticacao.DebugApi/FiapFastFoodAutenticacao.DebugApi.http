@@ -1,0 +1,6 @@
+@FiapFastFoodAutenticacao.DebugApi_HostAddress = http://localhost:5216
+
+GET {{FiapFastFoodAutenticacao.DebugApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
