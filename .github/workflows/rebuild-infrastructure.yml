@@ -1,16 +1,11 @@
-name: Deploy to AWS
+name: Rebuild Infrastructure
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to deploy'
+      confirm_rebuild:
+        description: 'Digite "REBUILD" para confirmar a recriação da infraestrutura'
         required: true
-        default: 'main'
         type: string
 
 env:
@@ -51,16 +46,14 @@ jobs:
         name: lambda-package
         path: package.zip
 
-  deploy:
+  rebuild:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.event.inputs.confirm_rebuild == 'REBUILD'
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.inputs.branch || github.ref }}
 
     - name: Download package
       uses: actions/download-artifact@v4
@@ -71,10 +64,6 @@ jobs:
     - name: Verify AWS secrets
       run: |
         echo "Checking AWS secrets..."
-        echo "AWS_ACCESS_KEY_ID length: ${#AWS_ACCESS_KEY_ID}"
-        echo "AWS_SECRET_ACCESS_KEY length: ${#AWS_SECRET_ACCESS_KEY}"
-        echo "AWS_SESSION_TOKEN length: ${#AWS_SESSION_TOKEN}"
-        
         if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
           echo "❌ AWS_ACCESS_KEY_ID is empty"
           exit 1
@@ -102,6 +91,14 @@ jobs:
       with:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+    - name: Clean previous state
+      run: |
+        cd infra/terraform
+        rm -rf .terraform/
+        rm -f .terraform.lock.hcl
+        rm -f terraform.tfstate*
+        echo "🧹 Estado anterior limpo"
+
     - name: Terraform Init
       run: |
         cd infra/terraform
@@ -118,6 +115,7 @@ jobs:
     - name: Terraform Apply
       run: |
         cd infra/terraform
+        echo "🚀 Criando nova infraestrutura..."
         terraform apply -auto-approve \
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
@@ -129,34 +127,38 @@ jobs:
         cd infra/terraform
         API_URL=$(terraform output -raw api_gateway_url)
         echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-        echo "🚀 API deployed at: $API_URL"
+        echo "🚀 Nova API criada em: $API_URL"
 
-    - name: Comment PR with deployment info
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const apiUrl = '${{ steps.get-url.outputs.api_url }}';
-          const comment = `## 🚀 Deployment Preview
-          
-          **API URL:** ${apiUrl}
-          
-          ### Endpoints disponíveis:
-          - \`POST ${apiUrl}/autenticacaoAdmin\` - Autenticação Admin
-          - \`POST ${apiUrl}/api/customer/identify\` - Identificar Customer
-          - \`POST ${apiUrl}/api/customer/register\` - Registrar Customer
-          - \`POST ${apiUrl}/api/customer/anonymous\` - Registrar Customer Anônimo
-          - \`GET ${apiUrl}/swagger\` - Documentação Swagger
-          
-          ### Teste rápido:
-          \`\`\`bash
-          curl ${apiUrl}/
-          \`\`\`
-          `;
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
+    - name: Verify new infrastructure
+      run: |
+        echo "🔍 Verificando nova infraestrutura..."
+        aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text
+        aws apigateway get-rest-apis --query 'items[?name==`FiapFastFoodAutenticacao-api`]' --output table
+
+    - name: Test endpoints
+      run: |
+        API_URL="${{ steps.get-url.outputs.api_url }}"
+        echo "🧪 Testando endpoints..."
+        echo "API URL: $API_URL"
+        
+        # Teste básico
+        curl -s -o /dev/null -w "%{http_code}" "$API_URL/" || echo "Teste básico falhou"
+        
+        echo ""
+        echo "📋 Endpoints disponíveis:"
+        echo "- POST $API_URL/customer/identify"
+        echo "- POST $API_URL/customer/register"
+        echo "- POST $API_URL/customer/register-anonymous"
+        echo "- POST $API_URL/admin/login"
+
+    - name: Rebuild Summary
+      run: |
+        echo "🎯 RECRIAÇÃO CONCLUÍDA"
+        echo "=================================="
+        echo "✅ Lambda Function: CRIADA"
+        echo "✅ API Gateway: CRIADO"
+        echo "✅ Permissões IAM: CRIADAS"
+        echo "✅ Estado Terraform: INICIALIZADO"
+        echo ""
+        echo "🌐 Nova API URL: ${{ steps.get-url.outputs.api_url }}"
+        echo "🚀 Infraestrutura pronta para uso!"

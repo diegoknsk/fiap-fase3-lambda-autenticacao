@@ -10,7 +10,7 @@ output "lambda_function_arn" {
 
 output "api_gateway_url" {
   description = "URL do API Gateway"
-  value       = "https://${aws_api_gateway_rest_api.auth_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.environment}"
+  value       = "https://${aws_api_gateway_rest_api.auth_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_api_gateway_stage.auth_stage.stage_name}"
 }
 
 output "api_gateway_id" {
@@ -18,27 +18,9 @@ output "api_gateway_id" {
   value       = aws_api_gateway_rest_api.auth_api.id
 }
 
-output "db_secret_arn" {
-  description = "ARN do secret de conexão do banco"
-  value       = aws_secretsmanager_secret.connection_string.arn
-}
+# Secrets removidos - usando variáveis de ambiente simples
 
-output "jwt_secret_arn" {
-  description = "ARN do secret de configurações JWT"
-  value       = aws_secretsmanager_secret.jwt_settings.arn
-}
-
-output "db_secret_name" {
-  description = "Nome do secret de conexão do banco"
-  value       = aws_secretsmanager_secret.connection_string.name
-}
-
-output "jwt_secret_name" {
-  description = "Nome do secret de configurações JWT"
-  value       = aws_secretsmanager_secret.jwt_settings.name
-}
-
-output "iam_role_arn" {
-  description = "ARN da IAM Role do Lambda"
-  value       = aws_iam_role.lambda_exec.arn
+output "lab_role_arn" {
+  description = "ARN da LabRole usada pela Lambda"
+  value       = var.lab_role_arn
 }

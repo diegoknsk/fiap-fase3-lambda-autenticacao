@@ -24,27 +24,42 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
       - name: Restaurar dependências
-        run: dotnet restore
+        run: dotnet restore ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj
 
       - name: Compilar projeto
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --no-restore
 
-      - name: Publicar para Linux
-        run: |
-          dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj \
-            -c Release \
-            -r linux-x64 \
-            --self-contained false \
-            /p:GenerateRuntimeConfigurationFiles=true \
-            --no-build
+      - name: Publicar projeto
+        run: dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --output ./publish --no-build -p:PublishReadyToRun=false
 
       - name: Criar pacote ZIP
         run: |
-          cd ./src/FiapFastFoodAutenticacao/bin/Release/net8.0/linux-x64/publish
-          zip -r ../../../../../../package.zip .
+          cd publish
+          zip -r ../package.zip .
+          cd ..
+
+      - name: Verificar status da função
+        run: |
+          echo "Verificando status da função Lambda..."
+          aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text
+
+      - name: Aguardar função estar disponível
+        run: |
+          echo "Aguardando função estar disponível para atualização..."
+          while true; do
+            STATE=$(aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text)
+            echo "Estado atual: $STATE"
+            if [ "$STATE" = "Active" ]; then
+              echo "Função está ativa, prosseguindo..."
+              break
+            fi
+            echo "Função não está ativa, aguardando 10 segundos..."
+            sleep 10
+          done
 
       - name: Deploy para AWS Lambda
         run: |
@@ -52,11 +67,16 @@ jobs:
             --function-name FiapFastFoodAutenticacao \
             --zip-file fileb://package.zip
 
+      - name: Aguardar atualização do código
+        run: |
+          echo "Aguardando atualização do código..."
+          sleep 15
+
       - name: Atualizar configuração da função
         run: |
           aws lambda update-function-configuration \
             --function-name FiapFastFoodAutenticacao \
-            --handler "FiapFastFoodAutenticacao::LambdaEntryPoint::FunctionHandlerAsync" \
+            --handler "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync" \
             --runtime "dotnet8" \
             --timeout 30 \
             --memory-size 512

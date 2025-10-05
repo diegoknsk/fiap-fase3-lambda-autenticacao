@@ -1,100 +1,20 @@
 # Data source para região atual
 data "aws_region" "current" {}
 
-# IAM Role para Lambda
-resource "aws_iam_role" "lambda_exec" {
-  name = "${var.project_name}-lambda-exec-role"
+# Usar LabRole existente da AWS Academy
+# Não criamos recursos IAM pois não temos permissão
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
+# Secrets removidos temporariamente - já existem na AWS Academy
+# Usar configuração simples via variáveis de ambiente
 
-  tags = var.tags
-}
-
-# Anexar política básica de execução do Lambda
-resource "aws_iam_role_policy_attachment" "basic_exec" {
-  role       = aws_iam_role.lambda_exec.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-# Secret no AWS Secrets Manager
-resource "aws_secretsmanager_secret" "connection_string" {
-  name        = "fastfood/db/connection-string"
-  description = "Connection string para o banco de dados MySQL do FastFood"
-
-  tags = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "connection_string_value" {
-  secret_id = aws_secretsmanager_secret.connection_string.id
-  secret_string = jsonencode({
-    connection_string = var.db_connection_string
-  })
-}
-
-# Secret para configurações JWT
-resource "aws_secretsmanager_secret" "jwt_settings" {
-  name        = "fastfood/jwt/settings"
-  description = "Configurações JWT para autenticação FastFood"
-
-  tags = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "jwt_settings_value" {
-  secret_id = aws_secretsmanager_secret.jwt_settings.id
-  secret_string = jsonencode({
-    secret   = var.jwt_secret
-    issuer   = var.jwt_issuer
-    audience = var.jwt_audience
-  })
-}
-
-# Política para ler secrets
-resource "aws_iam_policy" "secrets_read_policy" {
-  name        = "${var.project_name}-secrets-read-policy"
-  description = "Política para ler secrets do AWS Secrets Manager"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = [
-          aws_secretsmanager_secret.connection_string.arn,
-          aws_secretsmanager_secret.jwt_settings.arn
-        ]
-      }
-    ]
-  })
-
-  tags = var.tags
-}
-
-# Anexar política de secrets à role do Lambda
-resource "aws_iam_role_policy_attachment" "secrets_read_attach" {
-  role       = aws_iam_role.lambda_exec.name
-  policy_arn = aws_iam_policy.secrets_read_policy.arn
-}
+# Usar LabRole existente - não criamos políticas IAM
 
 # Lambda Function única com ASP.NET Core
 resource "aws_lambda_function" "auth" {
   filename         = "${path.module}/../../package.zip"
   function_name    = var.project_name
-  role            = aws_iam_role.lambda_exec.arn
-  handler         = "FiapFastFoodAutenticacao::LambdaEntryPoint::FunctionHandlerAsync"
+  role            = var.lab_role_arn
+  handler         = "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync"
   source_code_hash = filebase64sha256("${path.module}/../../package.zip")
   runtime         = "dotnet8"
   timeout         = 30
@@ -103,12 +23,13 @@ resource "aws_lambda_function" "auth" {
   environment {
     variables = {
       ASPNETCORE_ENVIRONMENT = "Production"
-      SECRET_CONNECTION_STRING_ARN = aws_secretsmanager_secret.connection_string.arn
-      SECRET_JWT_SETTINGS_ARN = aws_secretsmanager_secret.jwt_settings.arn
+      # Configuração JWT via variáveis de ambiente (simples)
+      JwtSettings__Secret = var.jwt_secret
+      JwtSettings__Issuer = var.jwt_issuer
+      JwtSettings__Audience = var.jwt_audience
+      JwtSettings__ExpirationHours = "3"
     }
   }
-
-  tags = var.tags
 }
 
 # API Gateway
@@ -119,8 +40,6 @@ resource "aws_api_gateway_rest_api" "auth_api" {
   endpoint_configuration {
     types = ["REGIONAL"]
   }
-
-  tags = var.tags
 }
 
 # Recurso raiz
@@ -185,10 +104,16 @@ resource "aws_api_gateway_deployment" "auth_deployment" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.auth_api.id
-  stage_name  = var.environment
 
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# Stage do API Gateway (substitui stage_name deprecated)
+resource "aws_api_gateway_stage" "auth_stage" {
+  deployment_id = aws_api_gateway_deployment.auth_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.auth_api.id
+  stage_name    = var.environment
 }
 
