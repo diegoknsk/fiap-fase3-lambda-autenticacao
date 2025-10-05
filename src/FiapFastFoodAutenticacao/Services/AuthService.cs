@@ -23,21 +23,4 @@ public class AuthService : IAuthService
         throw new UnauthorizedAccessException("Credenciais inválidas para admin");
     }
 
-    public async Task<TokenResponse> AutenticacaoTotemAsync(TotemIdentifyRequest request)
-    {
-        // Simular delay de rede/banco
-        await Task.Delay(100);
-
-        // Mock: CPF válido
-        if (request.Cpf == "12345678901")
-        {
-            return new TokenResponse
-            {
-                Token = "MOCK_TOTEM_JWT_TOKEN",
-                ExpiresAt = DateTime.UtcNow.AddHours(4)
-            };
-        }
-
-        throw new UnauthorizedAccessException("CPF não encontrado ou inválido");
-    }
 }
