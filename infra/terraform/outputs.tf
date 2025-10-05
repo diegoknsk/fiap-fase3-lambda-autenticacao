@@ -1,11 +1,11 @@
 output "lambda_function_name" {
   description = "Nome da função Lambda"
-  value       = aws_lambda_function.auth.function_name
+  value       = var.create_lambda ? aws_lambda_function.auth[0].function_name : "FastFoodAutenticacao"
 }
 
 output "lambda_function_arn" {
   description = "ARN da função Lambda"
-  value       = aws_lambda_function.auth.arn
+  value       = var.create_lambda ? aws_lambda_function.auth[0].arn : "arn:aws:lambda:us-east-1:898384491704:function:FastFoodAutenticacao"
 }
 
 output "api_gateway_url" {
