@@ -59,6 +59,23 @@ jobs:
         name: lambda-package
         path: .
 
+    - name: Verify AWS secrets
+      run: |
+        echo "Checking AWS secrets..."
+        if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+          echo "❌ AWS_ACCESS_KEY_ID is empty"
+          exit 1
+        fi
+        if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+          echo "❌ AWS_SECRET_ACCESS_KEY is empty"
+          exit 1
+        fi
+        if [ -z "${{ secrets.AWS_SESSION_TOKEN }}" ]; then
+          echo "❌ AWS_SESSION_TOKEN is empty"
+          exit 1
+        fi
+        echo "✅ All AWS secrets are configured"
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
