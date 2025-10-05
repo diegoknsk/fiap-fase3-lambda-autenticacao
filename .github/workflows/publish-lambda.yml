@@ -42,11 +42,35 @@ jobs:
           zip -r ../package.zip .
           cd ..
 
+      - name: Verificar status da função
+        run: |
+          echo "Verificando status da função Lambda..."
+          aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text
+
+      - name: Aguardar função estar disponível
+        run: |
+          echo "Aguardando função estar disponível para atualização..."
+          while true; do
+            STATE=$(aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text)
+            echo "Estado atual: $STATE"
+            if [ "$STATE" = "Active" ]; then
+              echo "Função está ativa, prosseguindo..."
+              break
+            fi
+            echo "Função não está ativa, aguardando 10 segundos..."
+            sleep 10
+          done
+
       - name: Deploy para AWS Lambda
         run: |
           aws lambda update-function-code \
             --function-name FiapFastFoodAutenticacao \
             --zip-file fileb://package.zip
+
+      - name: Aguardar atualização do código
+        run: |
+          echo "Aguardando atualização do código..."
+          sleep 15
 
       - name: Atualizar configuração da função
         run: |
