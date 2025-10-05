@@ -1,13 +1,14 @@
 using Amazon.Lambda.AspNetCoreServer;
 using Microsoft.AspNetCore.Hosting;
 
-namespace FiapFastFoodAutenticacao;
-
-public class LambdaEntryPoint : APIGatewayProxyFunction
+namespace FiapFastFoodAutenticacao
 {
-    protected override void Init(IWebHostBuilder builder)
+    public class LambdaEntryPoint : APIGatewayProxyFunction
     {
-        builder
-            .UseStartup<Startup>();
+        protected override void Init(IWebHostBuilder builder)
+        {
+            builder
+                .UseStartup<Startup>();
+        }
     }
 }
