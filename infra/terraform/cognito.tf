@@ -42,8 +42,7 @@ resource "aws_cognito_user_pool" "admins" {
     require_uppercase = false
   }
 
-  username_attributes      = []   # login por username
-  alias_attributes         = []
+  # Login por username (padrão)
   auto_verified_attributes = []
   mfa_configuration        = "OFF"
 
