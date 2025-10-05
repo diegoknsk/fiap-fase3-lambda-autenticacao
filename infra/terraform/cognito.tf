@@ -112,10 +112,10 @@ aws cognito-idp admin-set-user-password \
   --username ${aws_cognito_user.admin_user.username} \
   --password '${var.admin_password_permanent}' \
   --permanent \
-  --region ${var.aws_region}
+  --region us-east-1
 EOT
     environment = {
-      AWS_DEFAULT_REGION = var.aws_region
+      AWS_DEFAULT_REGION = "us-east-1"
     }
   }
 
