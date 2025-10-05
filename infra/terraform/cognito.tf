@@ -67,6 +67,7 @@ resource "aws_cognito_user_pool_client" "admins_client" {
   prevent_user_existence_errors = "ENABLED"
 
   explicit_auth_flows = [
+    "ALLOW_ADMIN_USER_PASSWORD_AUTH",
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
     "ALLOW_USER_SRP_AUTH"
