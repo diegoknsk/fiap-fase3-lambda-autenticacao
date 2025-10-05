@@ -102,6 +102,11 @@ Para facilitar a renovação das credenciais, use os scripts:
 - **Pull Request para `main`** → Preview do deploy (comentário na PR)
 - **Push para `dev`** → Apenas build (sem deploy)
 
+### **Deploy Manual**
+- **Actions** → **Deploy to AWS** → **Run workflow**
+- Escolha a branch que deseja fazer deploy
+- Útil para testar outras branches ou fazer deploy sob demanda
+
 ### **Processo de Deploy**
 1. **Build** - Compila o projeto .NET
 2. **Package** - Cria o ZIP para Lambda
