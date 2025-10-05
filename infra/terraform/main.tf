@@ -14,7 +14,7 @@ resource "aws_lambda_function" "auth" {
   filename         = "${path.module}/../../package.zip"
   function_name    = var.project_name
   role            = var.lab_role_arn
-  handler         = "FiapFastFoodAutenticacao::LambdaEntryPoint::FunctionHandlerAsync"
+  handler         = "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync
   source_code_hash = filebase64sha256("${path.module}/../../package.zip")
   runtime         = "dotnet8"
   timeout         = 30

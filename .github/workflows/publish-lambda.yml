@@ -76,7 +76,7 @@ jobs:
         run: |
           aws lambda update-function-configuration \
             --function-name FiapFastFoodAutenticacao \
-            --handler "FiapFastFoodAutenticacao::LambdaEntryPoint::FunctionHandlerAsync" \
+            --handler "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync" \
             --runtime "dotnet8" \
             --timeout 30 \
             --memory-size 512
