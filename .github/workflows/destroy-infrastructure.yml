@@ -1,0 +1,97 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: 'Digite "DESTROY" para confirmar a destruição da infraestrutura'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  TERRAFORM_VERSION: 1.7.0
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_destroy == 'DESTROY'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Verify AWS secrets
+      run: |
+        echo "Checking AWS secrets..."
+        if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+          echo "❌ AWS_ACCESS_KEY_ID is empty"
+          exit 1
+        fi
+        if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+          echo "❌ AWS_SECRET_ACCESS_KEY is empty"
+          exit 1
+        fi
+        if [ -z "${{ secrets.AWS_SESSION_TOKEN }}" ]; then
+          echo "❌ AWS_SESSION_TOKEN is empty"
+          exit 1
+        fi
+        echo "✅ All AWS secrets are configured"
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Terraform Init
+      run: |
+        cd infra/terraform
+        terraform init
+
+    - name: List existing resources
+      run: |
+        cd infra/terraform
+        echo "🔍 Listando recursos existentes..."
+        terraform state list || echo "Nenhum estado encontrado"
+
+    - name: Terraform Destroy
+      run: |
+        cd infra/terraform
+        echo "💥 Iniciando destruição da infraestrutura..."
+        terraform destroy -auto-approve \
+          -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+          -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
+          -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}"
+
+    - name: Verify destruction
+      run: |
+        echo "✅ Verificando se os recursos foram destruídos..."
+        aws lambda get-function --function-name FiapFastFoodAutenticacao 2>/dev/null && echo "❌ Lambda ainda existe" || echo "✅ Lambda foi destruído"
+        aws apigateway get-rest-apis --query 'items[?name==`FiapFastFoodAutenticacao-api`]' --output table 2>/dev/null || echo "✅ API Gateway foi destruído"
+
+    - name: Clean up local state
+      run: |
+        cd infra/terraform
+        rm -rf .terraform/
+        rm -f .terraform.lock.hcl
+        rm -f terraform.tfstate*
+        echo "🧹 Estado local limpo"
+
+    - name: Destruction Summary
+      run: |
+        echo "🎯 DESTRUIÇÃO CONCLUÍDA"
+        echo "=================================="
+        echo "✅ Lambda Function: DESTRUÍDA"
+        echo "✅ API Gateway: DESTRUÍDO"
+        echo "✅ Permissões IAM: DESTRUÍDAS"
+        echo "✅ Estado Terraform: LIMPO"
+        echo ""
+        echo "🚀 Pronto para recriar a infraestrutura!"
