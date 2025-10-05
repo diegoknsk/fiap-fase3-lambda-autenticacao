@@ -45,13 +45,13 @@ jobs:
       - name: Verificar status da função
         run: |
           echo "Verificando status da função Lambda..."
-          aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text
+          aws lambda get-function --function-name FastFoodAutenticacao --query 'Configuration.State' --output text
 
       - name: Aguardar função estar disponível
         run: |
           echo "Aguardando função estar disponível para atualização..."
           while true; do
-            STATE=$(aws lambda get-function --function-name FiapFastFoodAutenticacao --query 'Configuration.State' --output text)
+            STATE=$(aws lambda get-function --function-name FastFoodAutenticacao --query 'Configuration.State' --output text)
             echo "Estado atual: $STATE"
             if [ "$STATE" = "Active" ]; then
               echo "Função está ativa, prosseguindo..."
@@ -64,7 +64,7 @@ jobs:
       - name: Deploy para AWS Lambda
         run: |
           aws lambda update-function-code \
-            --function-name FiapFastFoodAutenticacao \
+            --function-name FastFoodAutenticacao \
             --zip-file fileb://package.zip
 
       - name: Aguardar atualização do código
@@ -75,7 +75,7 @@ jobs:
       - name: Atualizar configuração da função
         run: |
           aws lambda update-function-configuration \
-            --function-name FiapFastFoodAutenticacao \
+            --function-name FastFoodAutenticacao \
             --handler "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync" \
             --runtime "dotnet8" \
             --timeout 30 \
@@ -83,4 +83,4 @@ jobs:
 
       - name: Verificar deploy
         run: |
-          aws lambda get-function --function-name FiapFastFoodAutenticacao
+          aws lambda get-function --function-name FastFoodAutenticacao

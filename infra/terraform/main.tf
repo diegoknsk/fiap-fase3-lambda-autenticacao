@@ -30,6 +30,8 @@ resource "aws_lambda_function" "auth" {
       JwtSettings__ExpirationHours = "3"
     }
   }
+
+  tags = var.tags
 }
 
 # API Gateway
@@ -40,6 +42,8 @@ resource "aws_api_gateway_rest_api" "auth_api" {
   endpoint_configuration {
     types = ["REGIONAL"]
   }
+
+  tags = var.tags
 }
 
 # Recurso raiz

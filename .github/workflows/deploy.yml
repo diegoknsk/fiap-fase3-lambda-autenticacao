@@ -54,7 +54,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     
     steps:
     - name: Checkout code
@@ -136,22 +136,21 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
-          const apiUrl = '${{ steps.get-url.outputs.api_url }}';
-          const comment = `## 🚀 Deployment Preview
+          const comment = `## ✅ Build Successful
           
-          **API URL:** ${apiUrl}
+          O build foi executado com sucesso! 
           
-          ### Endpoints disponíveis:
-          - \`POST ${apiUrl}/autenticacaoAdmin\` - Autenticação Admin
-          - \`POST ${apiUrl}/api/customer/identify\` - Identificar Customer
-          - \`POST ${apiUrl}/api/customer/register\` - Registrar Customer
-          - \`POST ${apiUrl}/api/customer/anonymous\` - Registrar Customer Anônimo
-          - \`GET ${apiUrl}/swagger\` - Documentação Swagger
+          ### Próximos passos:
+          - ✅ Build concluído
+          - ⏳ Deploy será executado após merge para main
+          - 🚀 Lambda será atualizado automaticamente
           
-          ### Teste rápido:
-          \`\`\`bash
-          curl ${apiUrl}/
-          \`\`\`
+          ### Endpoints que estarão disponíveis após deploy:
+          - \`POST /autenticacaoAdmin\` - Autenticação Admin
+          - \`POST /api/customer/identify\` - Identificar Customer
+          - \`POST /api/customer/register\` - Registrar Customer
+          - \`POST /api/customer/anonymous\` - Registrar Customer Anônimo
+          - \`GET /swagger\` - Documentação Swagger
           `;
           
           github.rest.issues.createComment({
