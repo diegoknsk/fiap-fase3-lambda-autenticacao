@@ -111,7 +111,6 @@ jobs:
       run: |
         cd infra/terraform
         terraform plan \
-          -var="db_connection_string=${{ secrets.DB_CONNECTION_STRING }}" \
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}"
@@ -120,7 +119,6 @@ jobs:
       run: |
         cd infra/terraform
         terraform apply -auto-approve \
-          -var="db_connection_string=${{ secrets.DB_CONNECTION_STRING }}" \
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}"

@@ -20,11 +20,7 @@ variable "tags" {
   }
 }
 
-variable "db_connection_string" {
-  description = "Connection string do banco de dados"
-  type        = string
-  sensitive   = true
-}
+# db_connection_string removido - usando configuração simples
 
 variable "jwt_secret" {
   description = "Secret para geração de JWT tokens"

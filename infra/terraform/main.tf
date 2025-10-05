@@ -4,37 +4,8 @@ data "aws_region" "current" {}
 # Usar LabRole existente da AWS Academy
 # Não criamos recursos IAM pois não temos permissão
 
-# Secret no AWS Secrets Manager
-resource "aws_secretsmanager_secret" "connection_string" {
-  name        = "fastfood/db/connection-string"
-  description = "Connection string para o banco de dados MySQL do FastFood"
-
-  tags = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "connection_string_value" {
-  secret_id = aws_secretsmanager_secret.connection_string.id
-  secret_string = jsonencode({
-    connection_string = var.db_connection_string
-  })
-}
-
-# Secret para configurações JWT
-resource "aws_secretsmanager_secret" "jwt_settings" {
-  name        = "fastfood/jwt/settings"
-  description = "Configurações JWT para autenticação FastFood"
-
-  tags = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "jwt_settings_value" {
-  secret_id = aws_secretsmanager_secret.jwt_settings.id
-  secret_string = jsonencode({
-    secret   = var.jwt_secret
-    issuer   = var.jwt_issuer
-    audience = var.jwt_audience
-  })
-}
+# Secrets removidos temporariamente - já existem na AWS Academy
+# Usar configuração simples via variáveis de ambiente
 
 # Usar LabRole existente - não criamos políticas IAM
 
@@ -52,8 +23,11 @@ resource "aws_lambda_function" "auth" {
   environment {
     variables = {
       ASPNETCORE_ENVIRONMENT = "Production"
-      SECRET_CONNECTION_STRING_ARN = aws_secretsmanager_secret.connection_string.arn
-      SECRET_JWT_SETTINGS_ARN = aws_secretsmanager_secret.jwt_settings.arn
+      # Configuração JWT via variáveis de ambiente (simples)
+      JwtSettings__Secret = var.jwt_secret
+      JwtSettings__Issuer = var.jwt_issuer
+      JwtSettings__Audience = var.jwt_audience
+      JwtSettings__ExpirationHours = "3"
     }
   }
 
@@ -134,10 +108,16 @@ resource "aws_api_gateway_deployment" "auth_deployment" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.auth_api.id
-  stage_name  = var.environment
 
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# Stage do API Gateway (substitui stage_name deprecated)
+resource "aws_api_gateway_stage" "auth_stage" {
+  deployment_id = aws_api_gateway_deployment.auth_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.auth_api.id
+  stage_name    = var.environment
 }
 
