@@ -37,7 +37,7 @@ aws sts get-caller-identity
    - `JWT_ISSUER`
    - `JWT_AUDIENCE`
 
-#### 2. Push para Deploy
+#### 2. Deploy Automático
 ```bash
 # Deploy automático para produção (apenas main)
 git push origin main
@@ -45,6 +45,13 @@ git push origin main
 # Para desenvolvimento, use dev (apenas build, sem deploy)
 git push origin dev
 ```
+
+#### 3. Deploy Manual (Qualquer Branch)
+1. Vá para **Actions** no GitHub
+2. Clique em **"Deploy to AWS"**
+3. Clique em **"Run workflow"**
+4. Escolha a branch desejada
+5. Clique em **"Run workflow"**
 
 ### **Opção 2: Deploy Manual**
 
