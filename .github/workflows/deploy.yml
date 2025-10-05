@@ -37,7 +37,7 @@ jobs:
       run: dotnet build ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --no-restore
 
     - name: Publish
-      run: dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --output ./publish --no-build
+      run: dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --output ./publish --no-build -p:PublishReadyToRun=false
 
     - name: Create deployment package
       run: |
