@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace FiapFastFoodAutenticacao;
 
-public class LambdaEntryPoint : APIGatewayHttpApiV2ProxyFunction
+public class LambdaEntryPoint : APIGatewayProxyFunction
 {
     protected override void Init(IWebHostBuilder builder)
     {
