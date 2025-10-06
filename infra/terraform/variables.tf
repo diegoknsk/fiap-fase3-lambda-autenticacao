@@ -58,3 +58,10 @@ variable "shared_sg_name" {
   default     = "eks-shared-to-rds"
 }
 
+variable "rds_connection_string" {
+  description = "Connection string do RDS MySQL"
+  type        = string
+  sensitive   = true
+  default     = "server=fastfood-rds-mysql.cdiuseg40rpb.us-east-1.rds.amazonaws.com;port=3306;database=fastfooddb;user=admin;password=admin123;SslMode=Preferred"
+}
+

@@ -1,0 +1,8 @@
+# opcional: limpar restos
+Remove-Item -Recurse -Force .\publish, .\package.zip -ErrorAction SilentlyContinue
+
+# 1) publicar
+dotnet publish -c Release -o publish
+
+# 2) zipar o CONTEÚDO da pasta publish (não a pasta)
+Compress-Archive -Path .\publish\* -DestinationPath .\package.zip -Force
