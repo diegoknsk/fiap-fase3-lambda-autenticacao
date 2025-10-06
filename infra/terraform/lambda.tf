@@ -23,6 +23,8 @@ resource "aws_lambda_function" "auth" {
       JwtSettings__Secret = var.jwt_secret
       JwtSettings__Issuer = var.jwt_issuer
       JwtSettings__Audience = var.jwt_audience
+      # Connection string do RDS
+      RDS_CONNECTION_STRING = var.rds_connection_string
     }
   }
 

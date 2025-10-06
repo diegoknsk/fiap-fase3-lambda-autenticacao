@@ -89,7 +89,8 @@ jobs:
             "Variables": {
               "COGNITO__REGION": "${{ vars.AWS_REGION }}",
               "COGNITO__USERPOOLID": "${{ secrets.COGNITO_USER_POOL_ID }}",
-              "COGNITO__CLIENTID": "${{ secrets.COGNITO_CLIENT_ID }}"
+              "COGNITO__CLIENTID": "${{ secrets.COGNITO_CLIENT_ID }}",
+              "RDS_CONNECTION_STRING": "${{ secrets.RDS_CONNECTION_STRING }}"
             }
           }
           EOF

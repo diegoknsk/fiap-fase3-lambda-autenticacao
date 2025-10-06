@@ -86,6 +86,10 @@ public class CustomerHandler
             context.Logger.LogInformation("Iniciando registro de customer anônimo");
             await LogSecretInfo(context);
             
+            // Teste de conexão com o banco
+            var dbConnectionResult = await TestDatabaseConnection(context);
+            context.Logger.LogInformation($"Teste de conexão com banco: {dbConnectionResult}");
+            
             var response = await _registerAnonymousUseCase.ExecuteAsync();
             
             context.Logger.LogInformation($"Registro de customer anônimo concluído. CustomerId: {response.CustomerId}");
@@ -96,6 +100,33 @@ public class CustomerHandler
         {
             context.Logger.LogError($"Erro no registro de customer anônimo: {ex.Message}");
             throw;
+        }
+    }
+
+    private async Task<string> TestDatabaseConnection(ILambdaContext context)
+    {
+        try
+        {
+            var connectionString = Environment.GetEnvironmentVariable("RDS_CONNECTION_STRING");
+            
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                context.Logger.LogError("❌ RDS_CONNECTION_STRING não configurada");
+                return "FALHA - Variável RDS_CONNECTION_STRING não configurada";
+            }
+            
+            context.Logger.LogInformation("Testando conexão com o banco de dados...");
+            
+            using var connection = new MySql.Data.MySqlClient.MySqlConnection(connectionString);
+            await connection.OpenAsync();
+            
+            context.Logger.LogInformation("✅ Conexão com banco estabelecida com sucesso!");
+            return "SUCESSO - Conectado ao banco";
+        }
+        catch (Exception ex)
+        {
+            context.Logger.LogError($"❌ Falha na conexão com banco: {ex.Message}");
+            return $"FALHA - Erro: {ex.Message}";
         }
     }
 
