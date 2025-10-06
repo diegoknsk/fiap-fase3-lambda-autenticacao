@@ -20,7 +20,11 @@ public class Function
         try
         {
             var body = string.IsNullOrWhiteSpace(req.Body) ? "{}" : req.Body;
+            ctx.Logger.LogInformation($"Request body: {body}");
+            
             var loginReq = JsonSerializer.Deserialize<AdminLoginRequest>(body)!;
+            ctx.Logger.LogInformation($"Deserialized - Username: '{loginReq.Username}', Password: '{loginReq.Password}'");
+            
             var result = await _admin.HandleAsync(loginReq, ctx);
 
             return new APIGatewayProxyResponse

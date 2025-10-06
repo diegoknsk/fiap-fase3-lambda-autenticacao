@@ -21,6 +21,12 @@ public class Function
         {
             var path = (req.Path ?? string.Empty).ToLowerInvariant();
             var body = string.IsNullOrWhiteSpace(req.Body) ? "{}" : req.Body;
+            
+            // Remove o stage do path (ex: /dev/customer/identify -> /customer/identify)
+            if (path.StartsWith("/dev/"))
+                path = path.Substring(4);
+            
+            ctx.Logger.LogInformation($"Customer Lambda - Path: '{path}', Body: '{body}'");
 
             switch (path)
             {
@@ -29,9 +35,14 @@ public class Function
                     var identRes = await _customer.HandleIdentifyAsync(ident, ctx);
                     return Ok(identRes);
 
-                // (Opcional) habilitar mais rotas depois:
-                // case "/customer/register": ...
-                // case "/customer/anonymous": ...
+                case "/customer/register":
+                    var register = JsonSerializer.Deserialize<CustomerRegisterModel>(body)!;
+                    var registerRes = await _customer.HandleRegisterAsync(register, ctx);
+                    return Ok(registerRes);
+
+                case "/customer/anonymous":
+                    var anonymousRes = await _customer.HandleRegisterAnonymousAsync(ctx);
+                    return Ok(anonymousRes);
 
                 default:
                     return new APIGatewayProxyResponse { StatusCode = 404, Body = "Not found" };

@@ -45,6 +45,24 @@ resource "aws_apigatewayv2_route" "customer_identify" {
   target    = "integrations/${aws_apigatewayv2_integration.customer_lambda[0].id}"
 }
 
+# Rota POST /customer/register -> Customer Lambda
+resource "aws_apigatewayv2_route" "customer_register" {
+  count = var.create_lambda ? 1 : 0
+  
+  api_id    = aws_apigatewayv2_api.fastfood_http[0].id
+  route_key = "POST /customer/register"
+  target    = "integrations/${aws_apigatewayv2_integration.customer_lambda[0].id}"
+}
+
+# Rota POST /customer/anonymous -> Customer Lambda
+resource "aws_apigatewayv2_route" "customer_anonymous" {
+  count = var.create_lambda ? 1 : 0
+  
+  api_id    = aws_apigatewayv2_api.fastfood_http[0].id
+  route_key = "POST /customer/anonymous"
+  target    = "integrations/${aws_apigatewayv2_integration.customer_lambda[0].id}"
+}
+
 # Stage do HTTP API
 resource "aws_apigatewayv2_stage" "fastfood_stage" {
   count = var.create_lambda ? 1 : 0

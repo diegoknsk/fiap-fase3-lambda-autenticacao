@@ -15,6 +15,8 @@ resource "aws_lambda_function" "admin" {
   environment {
     variables = {
       ASPNETCORE_ENVIRONMENT = "Production"
+      COGNITO__USERPOOLID = aws_cognito_user_pool.admins.id
+      COGNITO__CLIENTID = aws_cognito_user_pool_client.admins_client.id
     }
   }
 

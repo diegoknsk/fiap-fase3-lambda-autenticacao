@@ -2,15 +2,21 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
     paths:
       - 'infra/**'
+      - 'src/**'
       - '.github/workflows/deploy.yml'
+      - 'build.ps1'
+      - 'build.sh'
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
     paths:
       - 'infra/**'
+      - 'src/**'
       - '.github/workflows/deploy.yml'
+      - 'build.ps1'
+      - 'build.sh'
   workflow_dispatch:
     inputs:
       branch:
@@ -36,31 +42,23 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj
-
-    - name: Build
-      run: dotnet build ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --no-restore
-
-    - name: Publish
-      run: dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj --configuration Release --output ./publish --no-build -p:PublishReadyToRun=false
-
-    - name: Create deployment package
+    - name: Build and package Lambdas
       run: |
-        cd publish
-        zip -r ../package.zip .
-        cd ..
+        chmod +x ./build.sh
+        ./build.sh
 
-    - name: Upload package
+    - name: Upload packages
       uses: actions/upload-artifact@v4
       with:
-        name: lambda-package
-        path: package.zip
+        name: lambda-packages
+        path: |
+          admin-package.zip
+          customer-package.zip
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     
     steps:
     - name: Checkout code
@@ -68,10 +66,10 @@ jobs:
       with:
         ref: ${{ github.event.inputs.branch || github.ref }}
 
-    - name: Download package
+    - name: Download packages
       uses: actions/download-artifact@v4
       with:
-        name: lambda-package
+        name: lambda-packages
         path: .
 
     - name: Verify AWS secrets
