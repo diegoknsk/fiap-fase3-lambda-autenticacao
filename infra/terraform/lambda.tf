@@ -11,6 +11,11 @@ resource "aws_lambda_function" "auth" {
   timeout         = 30
   memory_size     = 512
 
+  vpc_config {
+    subnet_ids         = data.aws_subnets.supported.ids
+    security_group_ids = [local.shared_sg_id]
+  }
+
   environment {
     variables = {
       ASPNETCORE_ENVIRONMENT = "Production"

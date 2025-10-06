@@ -52,3 +52,9 @@ variable "create_lambda" {
   default     = true
 }
 
+variable "shared_sg_name" {
+  description = "Nome do Security Group compartilhado com permissão de acesso ao RDS"
+  type        = string
+  default     = "eks-shared-to-rds"
+}
+
