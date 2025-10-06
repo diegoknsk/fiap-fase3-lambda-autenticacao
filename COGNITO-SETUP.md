@@ -29,7 +29,7 @@ Este documento descreve as alterações implementadas para integrar o AWS Cognit
 ### 3. Recursos Criados pelo Terraform
 
 #### Cognito User Pool:
-- Nome: `fastfood-admins`
+- Nome: `admin-users-fastfood`
 - Política de senha: mínimo 8 caracteres, requer números
 - Login por username (sem email/SMS)
 - MFA desabilitado

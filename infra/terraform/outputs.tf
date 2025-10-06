@@ -24,3 +24,12 @@ output "lab_role_arn" {
   description = "ARN da LabRole usada pela Lambda"
   value       = var.lab_role_arn
 }
+
+output "lambda_network" {
+  description = "Informações de rede da Lambda"
+  value = {
+    vpc_id       = data.aws_vpc.default.id
+    subnet_ids   = data.aws_subnets.supported.ids
+    shared_sg_id = local.shared_sg_id
+  }
+}

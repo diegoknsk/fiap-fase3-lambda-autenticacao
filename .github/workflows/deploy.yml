@@ -113,16 +113,11 @@ jobs:
         cd infra/terraform
         terraform init
 
-    - name: Check if Lambda function exists
+    - name: Force Lambda recreation for VPC config
       run: |
         cd infra/terraform
-        if aws lambda get-function --function-name FastFoodAutenticacao >/dev/null 2>&1; then
-          echo "Lambda function exists, will skip creation"
-          echo "LAMBDA_EXISTS=true" >> $GITHUB_ENV
-        else
-          echo "Lambda function does not exist, will create"
-          echo "LAMBDA_EXISTS=false" >> $GITHUB_ENV
-        fi
+        echo "Forcing Lambda recreation to apply VPC configuration"
+        echo "LAMBDA_EXISTS=false" >> $GITHUB_ENV
 
     - name: Terraform Plan
       run: |
@@ -133,7 +128,8 @@ jobs:
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
-          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}"
+          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
+          -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}"
 
     - name: Terraform Apply
       run: |
@@ -144,7 +140,8 @@ jobs:
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
-          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}"
+          -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
+          -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}"
 
     - name: Get API Gateway URL
       id: get-url
