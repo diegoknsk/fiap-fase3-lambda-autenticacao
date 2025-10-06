@@ -113,16 +113,11 @@ jobs:
         cd infra/terraform
         terraform init
 
-    - name: Check if Lambda function exists
+    - name: Force Lambda recreation for VPC config
       run: |
         cd infra/terraform
-        if aws lambda get-function --function-name FastFoodAutenticacao >/dev/null 2>&1; then
-          echo "Lambda function exists, will skip creation"
-          echo "LAMBDA_EXISTS=true" >> $GITHUB_ENV
-        else
-          echo "Lambda function does not exist, will create"
-          echo "LAMBDA_EXISTS=false" >> $GITHUB_ENV
-        fi
+        echo "Forcing Lambda recreation to apply VPC configuration"
+        echo "LAMBDA_EXISTS=false" >> $GITHUB_ENV
 
     - name: Terraform Plan
       run: |
