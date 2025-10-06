@@ -2,7 +2,7 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main ]
     paths:
       - 'infra/**'
       - 'src/**'
@@ -10,7 +10,7 @@ on:
       - 'build.ps1'
       - 'build.sh'
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main ]
     paths:
       - 'infra/**'
       - 'src/**'
@@ -58,7 +58,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     
     steps:
     - name: Checkout code
@@ -147,7 +147,7 @@ jobs:
       id: get-url
       run: |
         cd infra/terraform
-        API_URL=$(terraform output -raw api_gateway_url)
+        API_URL=$(terraform output -raw http_api_gateway_url)
         echo "api_url=$API_URL" >> $GITHUB_OUTPUT
         echo "🚀 API deployed at: $API_URL"
 
