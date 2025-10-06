@@ -8,7 +8,7 @@ variable "aws_region" {
 
 variable "cognito_user_pool_name" {
   type    = string
-  default = "fastfood-admins"
+  default = "admin-users-fastfood"
 }
 
 variable "cognito_app_client_name" {
