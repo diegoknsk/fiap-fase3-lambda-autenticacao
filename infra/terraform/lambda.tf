@@ -13,7 +13,7 @@ resource "aws_lambda_function" "auth" {
 
   vpc_config {
     subnet_ids         = data.aws_subnets.supported.ids
-    security_group_ids = [local.shared_sg_id]
+    security_group_ids = [aws_security_group.lambda_sg.id, local.shared_sg_id]
   }
 
   environment {
