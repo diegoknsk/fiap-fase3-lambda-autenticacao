@@ -110,6 +110,14 @@ jobs:
       run: |
         cd infra/terraform
         terraform init
+        
+        # Verificar se o init foi bem-sucedido
+        if [ $? -eq 0 ]; then
+          echo "✅ Terraform init completed successfully"
+        else
+          echo "❌ Terraform init failed"
+          exit 1
+        fi
 
     - name: Force Lambda recreation for VPC config
       run: |
@@ -142,27 +150,86 @@ jobs:
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
           -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}" \
           -var="rds_connection_string=${{ secrets.RDS_CONNECTION_STRING }}"
+        
+        # Verificar se o apply foi bem-sucedido
+        if [ $? -eq 0 ]; then
+          echo "✅ Terraform apply completed successfully"
+        else
+          echo "❌ Terraform apply failed"
+          exit 1
+        fi
+
+    - name: List Terraform outputs
+      run: |
+        cd infra/terraform
+        echo "Available Terraform outputs:"
+        terraform output
+        
+        # Verificar se há outputs disponíveis
+        if [ $? -eq 0 ]; then
+          echo "✅ Terraform outputs are available"
+        else
+          echo "❌ No Terraform outputs found"
+          exit 1
+        fi
 
     - name: Get API Gateway URL
       id: get-url
       run: |
         cd infra/terraform
-        API_URL=$(terraform output -raw http_api_gateway_url)
-        echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-        echo "🚀 API deployed at: $API_URL"
+        # Verificar se o output existe antes de tentar acessá-lo
+        if terraform output -json | jq -e '.http_api_gateway_url' > /dev/null 2>&1; then
+          API_URL=$(terraform output -raw http_api_gateway_url)
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+          echo "🚀 API deployed at: $API_URL"
+        else
+          echo "❌ Output 'http_api_gateway_url' not found in Terraform state"
+          echo "Available outputs:"
+          terraform output
+          echo "Trying to get output without jq..."
+          # Fallback sem jq
+          API_URL=$(terraform output -raw http_api_gateway_url 2>/dev/null || echo "")
+          if [ -n "$API_URL" ]; then
+            echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+            echo "🚀 API deployed at: $API_URL"
+          else
+            exit 1
+          fi
+        fi
 
     - name: Get Cognito outputs
       id: get-cognito
       run: |
         cd infra/terraform
-        COGNITO_USER_POOL_ID=$(terraform output -raw cognito_user_pool_id)
-        COGNITO_APP_CLIENT_ID=$(terraform output -raw cognito_app_client_id)
-        COGNITO_JWKS_URL=$(terraform output -raw cognito_jwks_url)
-        echo "cognito_user_pool_id=$COGNITO_USER_POOL_ID" >> $GITHUB_OUTPUT
-        echo "cognito_app_client_id=$COGNITO_APP_CLIENT_ID" >> $GITHUB_OUTPUT
-        echo "cognito_jwks_url=$COGNITO_JWKS_URL" >> $GITHUB_OUTPUT
-        echo "🔐 Cognito User Pool ID: $COGNITO_USER_POOL_ID"
-        echo "🔐 Cognito App Client ID: $COGNITO_APP_CLIENT_ID"
+        # Verificar se os outputs do Cognito existem
+        if terraform output -json | jq -e '.cognito_user_pool_id' > /dev/null 2>&1; then
+          COGNITO_USER_POOL_ID=$(terraform output -raw cognito_user_pool_id)
+          COGNITO_APP_CLIENT_ID=$(terraform output -raw cognito_app_client_id)
+          COGNITO_JWKS_URL=$(terraform output -raw cognito_jwks_url)
+          echo "cognito_user_pool_id=$COGNITO_USER_POOL_ID" >> $GITHUB_OUTPUT
+          echo "cognito_app_client_id=$COGNITO_APP_CLIENT_ID" >> $GITHUB_OUTPUT
+          echo "cognito_jwks_url=$COGNITO_JWKS_URL" >> $GITHUB_OUTPUT
+          echo "🔐 Cognito User Pool ID: $COGNITO_USER_POOL_ID"
+          echo "🔐 Cognito App Client ID: $COGNITO_APP_CLIENT_ID"
+        else
+          echo "❌ Cognito outputs not found in Terraform state"
+          echo "Available outputs:"
+          terraform output
+          echo "Trying to get Cognito outputs without jq..."
+          # Fallback sem jq
+          COGNITO_USER_POOL_ID=$(terraform output -raw cognito_user_pool_id 2>/dev/null || echo "")
+          COGNITO_APP_CLIENT_ID=$(terraform output -raw cognito_app_client_id 2>/dev/null || echo "")
+          COGNITO_JWKS_URL=$(terraform output -raw cognito_jwks_url 2>/dev/null || echo "")
+          if [ -n "$COGNITO_USER_POOL_ID" ] && [ -n "$COGNITO_APP_CLIENT_ID" ] && [ -n "$COGNITO_JWKS_URL" ]; then
+            echo "cognito_user_pool_id=$COGNITO_USER_POOL_ID" >> $GITHUB_OUTPUT
+            echo "cognito_app_client_id=$COGNITO_APP_CLIENT_ID" >> $GITHUB_OUTPUT
+            echo "cognito_jwks_url=$COGNITO_JWKS_URL" >> $GITHUB_OUTPUT
+            echo "🔐 Cognito User Pool ID: $COGNITO_USER_POOL_ID"
+            echo "🔐 Cognito App Client ID: $COGNITO_APP_CLIENT_ID"
+          else
+            exit 1
+          fi
+        fi
 
     - name: Comment PR with deployment info
       if: github.event_name == 'pull_request'

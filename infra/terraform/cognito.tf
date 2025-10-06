@@ -123,21 +123,4 @@ EOT
   depends_on = [aws_cognito_user.admin_user]
 }
 
-############################
-# OUTPUTS (adicionar aqui; se já existir outputs.tf, pode manter nestes também)
-############################
-output "cognito_user_pool_id" {
-  value = aws_cognito_user_pool.admins.id
-}
-
-output "cognito_app_client_id" {
-  value = aws_cognito_user_pool_client.admins_client.id
-}
-
-output "cognito_admin_username" {
-  value = aws_cognito_user.admin_user.username
-}
-
-output "cognito_jwks_url" {
-  value = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.admins.id}/.well-known/jwks.json"
-}
+# Outputs movidos para outputs.tf para centralização

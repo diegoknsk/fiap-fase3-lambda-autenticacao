@@ -43,3 +43,24 @@ output "lambda_network" {
     shared_sg_id = local.shared_sg_id
   }
 }
+
+# Outputs do Cognito
+output "cognito_user_pool_id" {
+  description = "ID do User Pool do Cognito"
+  value       = aws_cognito_user_pool.admins.id
+}
+
+output "cognito_app_client_id" {
+  description = "ID do App Client do Cognito"
+  value       = aws_cognito_user_pool_client.admins_client.id
+}
+
+output "cognito_admin_username" {
+  description = "Username do admin criado no Cognito"
+  value       = aws_cognito_user.admin_user.username
+}
+
+output "cognito_jwks_url" {
+  description = "URL do JWKS do Cognito"
+  value       = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.admins.id}/.well-known/jwks.json"
+}
