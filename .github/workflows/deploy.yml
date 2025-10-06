@@ -129,7 +129,8 @@ jobs:
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
-          -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}"
+          -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}" \
+          -var="rds_connection_string=${{ secrets.RDS_CONNECTION_STRING }}"
 
     - name: Terraform Apply
       run: |
@@ -141,7 +142,8 @@ jobs:
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
-          -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}"
+          -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}" \
+          -var="rds_connection_string=${{ secrets.RDS_CONNECTION_STRING }}"
 
     - name: Get API Gateway URL
       id: get-url

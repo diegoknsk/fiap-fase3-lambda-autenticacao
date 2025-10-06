@@ -1,0 +1,91 @@
+name: Recreate Lambda Function
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_recreate:
+        description: 'Force recreate Lambda function'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  recreate-lambda:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Build and package Lambda
+      run: |
+        cd src/FiapFastFoodAutenticacao
+        dotnet publish -c Release -o ../../publish
+
+    - name: Create ZIP package
+      run: |
+        cd publish
+        zip -r ../package.zip .
+        cd ..
+
+    - name: Delete existing Lambda function (if exists)
+      run: |
+        echo "Tentando deletar função Lambda existente..."
+        if aws lambda get-function --function-name FastFoodAutenticacao >/dev/null 2>&1; then
+          echo "Função encontrada, deletando..."
+          aws lambda delete-function --function-name FastFoodAutenticacao
+          echo "Função deletada com sucesso"
+        else
+          echo "Função não existe, prosseguindo..."
+        fi
+
+    - name: Wait for deletion
+      run: |
+        echo "Aguardando 30 segundos para garantir que a função foi deletada..."
+        sleep 30
+
+    - name: Create new Lambda function
+      run: |
+        echo "Criando nova função Lambda..."
+        aws lambda create-function \
+          --function-name FastFoodAutenticacao \
+          --runtime dotnet8 \
+          --role arn:aws:iam::898384491704:role/LabRole \
+          --handler "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync" \
+          --zip-file fileb://package.zip \
+          --timeout 30 \
+          --memory-size 512 \
+          --environment Variables='{
+            "ASPNETCORE_ENVIRONMENT":"Production",
+            "JwtSettings__Secret":"${{ secrets.JWT_SECRET }}",
+            "JwtSettings__Issuer":"${{ secrets.JWT_ISSUER }}",
+            "JwtSettings__Audience":"${{ secrets.JWT_AUDIENCE }}",
+            "RDS_CONNECTION_STRING":"${{ secrets.RDS_CONNECTION_STRING }}"
+          }' \
+          --vpc-config '{
+            "SubnetIds":["subnet-045bdc5c0aa53d6ea","subnet-0291c3411468fd29a","subnet-0fd37c3b40c4d4e4f","subnet-0d98ee93a8159d000","subnet-0d8dd79496330929d"],
+            "SecurityGroupIds":["sg-07f79ae37fde73580"]
+          }'
+
+    - name: Verify function creation
+      run: |
+        echo "Verificando se a função foi criada com sucesso..."
+        aws lambda get-function --function-name FastFoodAutenticacao
+        echo "✅ Função Lambda recriada com sucesso!"
+
+    - name: Test function
+      run: |
+        echo "Testando a função..."
+        aws lambda invoke \
+          --function-name FastFoodAutenticacao \
+          --payload '{"httpMethod":"POST","path":"/autenticacao/anonymous","body":"{}"}' \
+          response.json
+        echo "Resposta da função:"
+        cat response.json
