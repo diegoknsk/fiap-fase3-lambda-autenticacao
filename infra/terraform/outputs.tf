@@ -1,21 +1,31 @@
-output "lambda_function_name" {
-  description = "Nome da função Lambda"
-  value       = var.create_lambda ? aws_lambda_function.auth[0].function_name : "FastFoodAutenticacao"
+output "admin_lambda_function_name" {
+  description = "Nome da função Lambda Admin"
+  value       = var.create_lambda ? aws_lambda_function.admin[0].function_name : "FastFoodAutenticacaoAdmin"
 }
 
-output "lambda_function_arn" {
-  description = "ARN da função Lambda"
-  value       = var.create_lambda ? aws_lambda_function.auth[0].arn : "arn:aws:lambda:us-east-1:898384491704:function:FastFoodAutenticacao"
+output "admin_lambda_function_arn" {
+  description = "ARN da função Lambda Admin"
+  value       = var.create_lambda ? aws_lambda_function.admin[0].arn : "arn:aws:lambda:us-east-1:898384491704:function:FastFoodAutenticacaoAdmin"
 }
 
-output "api_gateway_url" {
-  description = "URL do API Gateway"
-  value       = var.create_lambda ? "https://${aws_api_gateway_rest_api.auth_api[0].id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_api_gateway_stage.auth_stage[0].stage_name}" : "API Gateway not created (Lambda exists)"
+output "customer_lambda_function_name" {
+  description = "Nome da função Lambda Customer"
+  value       = var.create_lambda ? aws_lambda_function.customer[0].function_name : "FastFoodAutenticacaoCustomer"
 }
 
-output "api_gateway_id" {
-  description = "ID do API Gateway"
-  value       = var.create_lambda ? aws_api_gateway_rest_api.auth_api[0].id : "API Gateway not created (Lambda exists)"
+output "customer_lambda_function_arn" {
+  description = "ARN da função Lambda Customer"
+  value       = var.create_lambda ? aws_lambda_function.customer[0].arn : "arn:aws:lambda:us-east-1:898384491704:function:FastFoodAutenticacaoCustomer"
+}
+
+output "http_api_gateway_url" {
+  description = "URL do HTTP API Gateway"
+  value       = var.create_lambda ? "https://${aws_apigatewayv2_api.fastfood_http[0].id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_apigatewayv2_stage.fastfood_stage[0].name}" : "HTTP API Gateway not created (Lambda exists)"
+}
+
+output "http_api_gateway_id" {
+  description = "ID do HTTP API Gateway"
+  value       = var.create_lambda ? aws_apigatewayv2_api.fastfood_http[0].id : "HTTP API Gateway not created (Lambda exists)"
 }
 
 # Secrets removidos - usando variáveis de ambiente simples

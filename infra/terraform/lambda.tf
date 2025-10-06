@@ -1,12 +1,35 @@
-# Lambda Function - apenas se não existir
-resource "aws_lambda_function" "auth" {
+# Admin Lambda Function (sem VPC - acessa Cognito externamente)
+resource "aws_lambda_function" "admin" {
   count = var.create_lambda ? 1 : 0
   
-  filename         = "${path.module}/../../package.zip"
-  function_name    = var.project_name
+  filename         = "${path.module}/../../admin-package.zip"
+  function_name    = "FastFoodAutenticacaoAdmin"
   role            = var.lab_role_arn
-  handler         = "FiapFastFoodAutenticacao::FiapFastFoodAutenticacao.Handlers.Dispatcher::FunctionHandlerAsync"
-  source_code_hash = filebase64sha256("${path.module}/../../package.zip")
+  handler         = "FiapFastFoodAutenticacao.AdminLambda::FiapFastFoodAutenticacao.AdminLambda.Function::FunctionHandlerAsync"
+  source_code_hash = filebase64sha256("${path.module}/../../admin-package.zip")
+  runtime         = "dotnet8"
+  timeout         = 30
+  memory_size     = 512
+
+  # Sem VPC config - acessa Cognito externamente
+  environment {
+    variables = {
+      ASPNETCORE_ENVIRONMENT = "Production"
+    }
+  }
+
+  tags = var.tags
+}
+
+# Customer Lambda Function (com VPC - acessa RDS)
+resource "aws_lambda_function" "customer" {
+  count = var.create_lambda ? 1 : 0
+  
+  filename         = "${path.module}/../../customer-package.zip"
+  function_name    = "FastFoodAutenticacaoCustomer"
+  role            = var.lab_role_arn
+  handler         = "FiapFastFoodAutenticacao.CustomerLambda::FiapFastFoodAutenticacao.CustomerLambda.Function::FunctionHandlerAsync"
+  source_code_hash = filebase64sha256("${path.module}/../../customer-package.zip")
   runtime         = "dotnet8"
   timeout         = 30
   memory_size     = 512
