@@ -21,6 +21,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" />
     <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="3.7.400.0" />
     <PackageReference Include="MySql.Data" Version="9.1.0" />
+    <PackageReference Include="Dapper" Version="2.1.15" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

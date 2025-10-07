@@ -1,5 +1,4 @@
 using FiapFastFoodAutenticacao.Contracts;
-using FiapFastFoodAutenticacao.Core.Repositories;
 using FiapFastFoodAutenticacao.Core.UseCases;
 using FiapFastFoodAutenticacao.Dtos;
 using FiapFastFoodAutenticacao.Services;
@@ -20,8 +19,7 @@ builder.Services.AddSwaggerGen(c =>
 // DI limitado ao DebugApi para injetar IAuthService
 builder.Services.AddSingleton<IAuthService, AuthService>(); // atual: mock; depois troca pelo real
 
-// DI para Customer endpoints
-builder.Services.AddSingleton<IUsuarioRepository, UsuarioRepositoryMock>();
+// DI para Customer endpoints - usando os mesmos casos de uso do Lambda
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddSingleton<CustomerIdentifyUseCase>();
 builder.Services.AddSingleton<CustomerRegisterUseCase>();
@@ -42,12 +40,39 @@ app.MapGet("/", () => new {
     Version = "1.0.0",
     Description = "Esta API é apenas para debug local. A lógica de autenticação está 100% concentrada no projeto FiapFastFoodAutenticacao. Produção roda apenas a função Lambda.",
     Endpoints = new[] {
+        "GET /test-db - Testar conexão com banco",
         "POST /autenticacaoAdmin - Autenticação Admin",
         "POST /api/customer/identify - Identificar Customer por CPF",
         "POST /api/customer/register - Registrar Customer",
         "POST /api/customer/anonymous - Registrar Customer Anônimo"
     }
 });
+
+// Endpoint para testar conexão com banco
+app.MapGet("/test-db", async () =>
+{
+    try
+    {
+        var repo = new FiapFastFoodAutenticacao.Data.CustomerRepository();
+        // Tenta fazer uma query simples para testar a conexão
+        var result = await repo.ExistsCpfAsync("test");
+        return Results.Ok(new { 
+            Success = true, 
+            Message = "Conexão com banco estabelecida com sucesso!",
+            Timestamp = DateTime.UtcNow
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Ok(new { 
+            Success = false, 
+            Message = $"Erro na conexão com banco: {ex.Message}",
+            Timestamp = DateTime.UtcNow
+        });
+    }
+})
+.WithName("TestDatabase")
+.WithOpenApi();
 
 // NENHUMA regra aqui. Apenas delega para os UseCases/Services do Core
 app.MapPost("/autenticacaoAdmin", async (AdminLoginRequest req, IAuthService svc) =>

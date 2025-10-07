@@ -1,5 +1,4 @@
 using Amazon.Lambda.Core;
-using FiapFastFoodAutenticacao.Core.Repositories;
 using FiapFastFoodAutenticacao.Core.UseCases;
 using FiapFastFoodAutenticacao.Dtos;
 using FiapFastFoodAutenticacao.Services;
@@ -15,8 +14,6 @@ public class CustomerHandler
 
     public CustomerHandler()
     {
-        var usuarioRepository = new UsuarioRepositoryMock();
-        
         // Configuração simples para o TokenService
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -29,9 +26,9 @@ public class CustomerHandler
             .Build();
             
         var tokenService = new TokenService(configuration);
-        _identifyUseCase = new CustomerIdentifyUseCase(usuarioRepository, tokenService);
-        _registerUseCase = new CustomerRegisterUseCase(usuarioRepository, tokenService);
-        _registerAnonymousUseCase = new CustomerRegisterAnonymousUseCase(usuarioRepository, tokenService);
+        _identifyUseCase = new CustomerIdentifyUseCase(tokenService);
+        _registerUseCase = new CustomerRegisterUseCase(tokenService);
+        _registerAnonymousUseCase = new CustomerRegisterAnonymousUseCase(tokenService);
     }
 
     public async Task<CustomerTokenResponseModel> HandleIdentifyAsync(CustomerIdentifyModel request, ILambdaContext context)
@@ -40,6 +37,10 @@ public class CustomerHandler
         {
             context.Logger.LogInformation($"Iniciando identificação de customer para CPF: {MaskCpf(request.Cpf)}");
             await LogSecretInfo(context);
+            
+            // Teste de conexão com o banco
+            var dbConnectionResult = await TestDatabaseConnection(context);
+            context.Logger.LogInformation($"Teste de conexão com banco: {dbConnectionResult}");
             
             var response = await _identifyUseCase.ExecuteAsync(request.Cpf);
             
@@ -109,25 +110,41 @@ public class CustomerHandler
         {
             var connectionString = Environment.GetEnvironmentVariable("RDS_CONNECTION_STRING");
             
+            // Se não tiver variável de ambiente, usar string de teste
             if (string.IsNullOrEmpty(connectionString))
             {
-                context.Logger.LogError("❌ RDS_CONNECTION_STRING não configurada");
-                return "FALHA - Variável RDS_CONNECTION_STRING não configurada";
+                context.Logger.LogWarning("⚠️ RDS_CONNECTION_STRING não configurada, usando string de teste");
+                connectionString = "server=fastfood-rds-mysql.cdiuseg40rpb.us-east-1.rds.amazonaws.com;port=3306;database=fastfooddb;user=admin;password=admin123;SslMode=Preferred";
             }
             
             context.Logger.LogInformation("Testando conexão com o banco de dados...");
+            context.Logger.LogInformation($"Connection String: {MaskConnectionString(connectionString)}");
             
             using var connection = new MySql.Data.MySqlClient.MySqlConnection(connectionString);
             await connection.OpenAsync();
             
+            // Teste adicional: executar uma query simples
+            using var command = new MySql.Data.MySqlClient.MySqlCommand("SELECT 1 as test", connection);
+            var result = await command.ExecuteScalarAsync();
+            
             context.Logger.LogInformation("✅ Conexão com banco estabelecida com sucesso!");
-            return "SUCESSO - Conectado ao banco";
+            context.Logger.LogInformation($"✅ Query de teste executada: {result}");
+            return "SUCESSO - Conectado ao banco e query executada";
         }
         catch (Exception ex)
         {
             context.Logger.LogError($"❌ Falha na conexão com banco: {ex.Message}");
             return $"FALHA - Erro: {ex.Message}";
         }
+    }
+
+    private string MaskConnectionString(string connectionString)
+    {
+        if (string.IsNullOrEmpty(connectionString))
+            return "***";
+            
+        // Mascarar a senha na string de conexão para logs
+        return connectionString.Replace("password=admin123", "password=***");
     }
 
     private async Task LogSecretInfo(ILambdaContext context)

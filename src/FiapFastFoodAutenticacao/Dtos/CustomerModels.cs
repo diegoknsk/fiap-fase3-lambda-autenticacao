@@ -1,12 +1,16 @@
+using System.Text.Json.Serialization;
+
 namespace FiapFastFoodAutenticacao.Dtos;
 
 public class CustomerIdentifyModel
 {
+    [JsonPropertyName("cpf")]
     public string Cpf { get; set; } = string.Empty;
 }
 
 public class CustomerRegisterModel
 {
+    [JsonPropertyName("cpf")]
     public string Cpf { get; set; } = string.Empty;
 }
 

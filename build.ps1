@@ -1,7 +1,7 @@
 # Script de build para Windows PowerShell
-# Build e empacotamento do projeto .NET 8 Lambda
+# Build e empacotamento das duas Lambdas .NET 8
 
-Write-Host "=== Build FiapFastFoodAutenticacao Lambda ===" -ForegroundColor Green
+Write-Host "=== Build FiapFastFoodAutenticacao Lambdas ===" -ForegroundColor Green
 
 # Limpar diretórios anteriores
 if (Test-Path "publish") {
@@ -9,40 +9,72 @@ if (Test-Path "publish") {
     Write-Host "Diretório publish removido" -ForegroundColor Yellow
 }
 
-if (Test-Path "package.zip") {
-    Remove-Item -Force "package.zip"
-    Write-Host "package.zip removido" -ForegroundColor Yellow
+if (Test-Path "admin-package.zip") {
+    Remove-Item -Force "admin-package.zip"
+    Write-Host "admin-package.zip removido" -ForegroundColor Yellow
+}
+
+if (Test-Path "customer-package.zip") {
+    Remove-Item -Force "customer-package.zip"
+    Write-Host "customer-package.zip removido" -ForegroundColor Yellow
 }
 
 # Restaurar dependências
 Write-Host "Restaurando dependências..." -ForegroundColor Blue
 dotnet restore ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj
+dotnet restore ./src/FiapFastFoodAutenticacao.AdminLambda/FiapFastFoodAutenticacao.AdminLambda.csproj
+dotnet restore ./src/FiapFastFoodAutenticacao.CustomerLambda/FiapFastFoodAutenticacao.CustomerLambda.csproj
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Erro ao restaurar dependências" -ForegroundColor Red
     exit 1
 }
 
-# Compilar e publicar
-Write-Host "Compilando e publicando..." -ForegroundColor Blue
-dotnet publish ./src/FiapFastFoodAutenticacao/FiapFastFoodAutenticacao.csproj -c Release -o ./publish
+# Build Admin Lambda
+Write-Host "Compilando e publicando Admin Lambda..." -ForegroundColor Blue
+dotnet publish ./src/FiapFastFoodAutenticacao.AdminLambda/FiapFastFoodAutenticacao.AdminLambda.csproj -c Release -o ./publish/admin
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Erro na compilação" -ForegroundColor Red
+    Write-Host "Erro na compilação da Admin Lambda" -ForegroundColor Red
     exit 1
 }
 
-# Criar pacote ZIP
-Write-Host "Criando pacote ZIP..." -ForegroundColor Blue
-Set-Location publish
-Compress-Archive -Path * -DestinationPath ../package.zip -Force
-Set-Location ..
+# Build Customer Lambda
+Write-Host "Compilando e publicando Customer Lambda..." -ForegroundColor Blue
+dotnet publish ./src/FiapFastFoodAutenticacao.CustomerLambda/FiapFastFoodAutenticacao.CustomerLambda.csproj -c Release -o ./publish/customer
 
-if (Test-Path "package.zip") {
-    $size = (Get-Item "package.zip").Length
-    Write-Host "package.zip criado com sucesso! Tamanho: $([math]::Round($size/1MB, 2)) MB" -ForegroundColor Green
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Erro na compilação da Customer Lambda" -ForegroundColor Red
+    exit 1
+}
+
+# Criar pacotes ZIP
+Write-Host "Criando pacotes ZIP..." -ForegroundColor Blue
+
+# Admin Lambda ZIP
+Set-Location publish/admin
+Compress-Archive -Path * -DestinationPath ../../admin-package.zip -Force
+Set-Location ../..
+
+# Customer Lambda ZIP
+Set-Location publish/customer
+Compress-Archive -Path * -DestinationPath ../../customer-package.zip -Force
+Set-Location ../..
+
+# Verificar pacotes criados
+if (Test-Path "admin-package.zip") {
+    $adminSize = (Get-Item "admin-package.zip").Length
+    Write-Host "admin-package.zip criado com sucesso! Tamanho: $([math]::Round($adminSize/1MB, 2)) MB" -ForegroundColor Green
 } else {
-    Write-Host "Erro ao criar package.zip" -ForegroundColor Red
+    Write-Host "Erro ao criar admin-package.zip" -ForegroundColor Red
+    exit 1
+}
+
+if (Test-Path "customer-package.zip") {
+    $customerSize = (Get-Item "customer-package.zip").Length
+    Write-Host "customer-package.zip criado com sucesso! Tamanho: $([math]::Round($customerSize/1MB, 2)) MB" -ForegroundColor Green
+} else {
+    Write-Host "Erro ao criar customer-package.zip" -ForegroundColor Red
     exit 1
 }
 

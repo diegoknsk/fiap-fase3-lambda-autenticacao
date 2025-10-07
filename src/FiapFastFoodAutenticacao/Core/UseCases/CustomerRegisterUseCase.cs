@@ -1,53 +1,56 @@
 using FiapFastFoodAutenticacao.Contracts;
-using FiapFastFoodAutenticacao.Core.Repositories;
+using FiapFastFoodAutenticacao.Data;
 using FiapFastFoodAutenticacao.Dtos;
 
 namespace FiapFastFoodAutenticacao.Core.UseCases;
 
 public class CustomerRegisterUseCase
 {
-    private readonly IUsuarioRepository _usuarioRepository;
     private readonly ITokenService _tokenService;
 
-    public CustomerRegisterUseCase(IUsuarioRepository usuarioRepository, ITokenService tokenService)
+    public CustomerRegisterUseCase(ITokenService tokenService)
     {
-        _usuarioRepository = usuarioRepository;
         _tokenService = tokenService;
     }
 
     public async Task<CustomerTokenResponseModel> ExecuteAsync(CustomerRegisterModel request)
     {
-        // Verifica se já existe usuário com este CPF
-        var existingUsuario = await _usuarioRepository.ObterPorCpfAsync(request.Cpf);
-        if (existingUsuario != null)
+        var repo = new CustomerRepository();
+
+        var exists = await repo.ExistsCpfAsync(request.Cpf);
+        if (exists)
         {
-            // Se já existe, retorna token para o usuário existente
-            var token = _tokenService.GenerateToken(existingUsuario.Id, out var expiresAt);
+            var existing = await repo.GetByCpfAsync(request.Cpf);
+            if (existing == null)
+                throw new InvalidOperationException("Erro interno: customer existe mas não foi encontrado");
+                
+            var token = _tokenService.GenerateToken(existing.Id, out var expiresAt);
+
             return new CustomerTokenResponseModel
             {
                 Token = token,
-                CustomerId = existingUsuario.Id,
+                CustomerId = existing.Id,
                 ExpiresAt = expiresAt
             };
         }
 
-        // Cria novo usuário (mock - em produção seria salvo no banco)
-        var newUsuario = new Core.Models.Usuario
+        var novo = new CustomerModel
         {
             Id = Guid.NewGuid(),
-            Nome = $"Cliente {request.Cpf.Substring(0, 3)}***", // Nome baseado no CPF
-            Email = $"cliente_{request.Cpf}@temp.com", // Email temporário baseado no CPF
+            Name = null, // Nome vazio - será preenchido posteriormente
+            Email = null, // Email vazio - será preenchido posteriormente
             Cpf = request.Cpf,
-            Senha = "1234" // Mock - em produção seria hash da senha
+            CustomerType = 1 // 1 = Registered
         };
 
-        // Gera token JWT
-        var newToken = _tokenService.GenerateToken(newUsuario.Id, out var newExpiresAt);
+        await repo.AddAsync(novo);
+
+        var newToken = _tokenService.GenerateToken(novo.Id, out var newExpiresAt);
 
         return new CustomerTokenResponseModel
         {
             Token = newToken,
-            CustomerId = newUsuario.Id,
+            CustomerId = novo.Id,
             ExpiresAt = newExpiresAt
         };
     }
