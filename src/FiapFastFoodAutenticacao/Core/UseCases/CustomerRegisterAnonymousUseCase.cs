@@ -1,39 +1,39 @@
 using FiapFastFoodAutenticacao.Contracts;
-using FiapFastFoodAutenticacao.Core.Repositories;
+using FiapFastFoodAutenticacao.Data;
 using FiapFastFoodAutenticacao.Dtos;
 
 namespace FiapFastFoodAutenticacao.Core.UseCases;
 
 public class CustomerRegisterAnonymousUseCase
 {
-    private readonly IUsuarioRepository _usuarioRepository;
     private readonly ITokenService _tokenService;
 
-    public CustomerRegisterAnonymousUseCase(IUsuarioRepository usuarioRepository, ITokenService tokenService)
+    public CustomerRegisterAnonymousUseCase(ITokenService tokenService)
     {
-        _usuarioRepository = usuarioRepository;
         _tokenService = tokenService;
     }
 
     public async Task<CustomerTokenResponseModel> ExecuteAsync()
     {
-        // Cria usuário anônimo (mock - em produção seria salvo no banco)
-        var anonymousUsuario = new Core.Models.Usuario
+        var repo = new CustomerRepository();
+
+        var anonymous = new CustomerModel
         {
             Id = Guid.NewGuid(),
-            Nome = "Usuário Anônimo",
-            Email = $"anonymous_{Guid.NewGuid()}@temp.com",
-            Cpf = $"anonymous_{Guid.NewGuid()}",
-            Senha = "anonymous"
+            Name = null, // Nome vazio - usuário anônimo
+            Email = null, // Email vazio - usuário anônimo
+            Cpf = null, // CPF vazio - usuário anônimo
+            CustomerType = 2 // 2 = Anonymous
         };
 
-        // Gera token JWT
-        var token = _tokenService.GenerateToken(anonymousUsuario.Id, out var expiresAt);
+        await repo.AddAsync(anonymous);
+
+        var token = _tokenService.GenerateToken(anonymous.Id, out var expiresAt);
 
         return new CustomerTokenResponseModel
         {
             Token = token,
-            CustomerId = anonymousUsuario.Id,
+            CustomerId = anonymous.Id,
             ExpiresAt = expiresAt
         };
     }

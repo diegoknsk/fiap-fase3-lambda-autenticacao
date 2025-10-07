@@ -125,6 +125,17 @@ jobs:
         echo "Forcing Lambda recreation to apply VPC configuration"
         echo "LAMBDA_EXISTS=false" >> $GITHUB_ENV
 
+    - name: Set connection string
+      run: |
+        # Prioriza DB_CONNECTION_STRING, fallback para RDS_CONNECTION_STRING
+        if [ "${{ secrets.DB_CONNECTION_STRING }}" != "" ]; then
+          echo "CONNECTION_STRING=${{ secrets.DB_CONNECTION_STRING }}" >> $GITHUB_ENV
+          echo "✅ Using DB_CONNECTION_STRING secret"
+        else
+          echo "CONNECTION_STRING=${{ secrets.RDS_CONNECTION_STRING }}" >> $GITHUB_ENV
+          echo "✅ Using RDS_CONNECTION_STRING secret"
+        fi
+
     - name: Terraform Plan
       run: |
         cd infra/terraform
@@ -136,7 +147,7 @@ jobs:
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
           -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}" \
-          -var="rds_connection_string=${{ secrets.RDS_CONNECTION_STRING }}"
+          -var="rds_connection_string=${{ env.CONNECTION_STRING }}"
 
     - name: Terraform Apply
       run: |
@@ -149,7 +160,7 @@ jobs:
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
           -var="shared_sg_name=${{ vars.SHARED_SG_NAME || 'eks-shared-to-rds' }}" \
-          -var="rds_connection_string=${{ secrets.RDS_CONNECTION_STRING }}"
+          -var="rds_connection_string=${{ env.CONNECTION_STRING }}"
         
         # Verificar se o apply foi bem-sucedido
         if [ $? -eq 0 ]; then

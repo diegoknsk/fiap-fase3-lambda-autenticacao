@@ -1,5 +1,4 @@
 using Amazon.Lambda.Core;
-using FiapFastFoodAutenticacao.Core.Repositories;
 using FiapFastFoodAutenticacao.Core.UseCases;
 using FiapFastFoodAutenticacao.Dtos;
 using FiapFastFoodAutenticacao.Services;
@@ -15,8 +14,6 @@ public class CustomerHandler
 
     public CustomerHandler()
     {
-        var usuarioRepository = new UsuarioRepositoryMock();
-        
         // Configuração simples para o TokenService
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -29,9 +26,9 @@ public class CustomerHandler
             .Build();
             
         var tokenService = new TokenService(configuration);
-        _identifyUseCase = new CustomerIdentifyUseCase(usuarioRepository, tokenService);
-        _registerUseCase = new CustomerRegisterUseCase(usuarioRepository, tokenService);
-        _registerAnonymousUseCase = new CustomerRegisterAnonymousUseCase(usuarioRepository, tokenService);
+        _identifyUseCase = new CustomerIdentifyUseCase(tokenService);
+        _registerUseCase = new CustomerRegisterUseCase(tokenService);
+        _registerAnonymousUseCase = new CustomerRegisterAnonymousUseCase(tokenService);
     }
 
     public async Task<CustomerTokenResponseModel> HandleIdentifyAsync(CustomerIdentifyModel request, ILambdaContext context)
