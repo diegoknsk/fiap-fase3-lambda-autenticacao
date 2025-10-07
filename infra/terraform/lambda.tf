@@ -44,10 +44,10 @@ resource "aws_lambda_function" "customer" {
   environment {
     variables = {
       ASPNETCORE_ENVIRONMENT = "Production"
-      # Configuração JWT via variáveis de ambiente (simples)
-      JwtSettings__Secret = var.jwt_secret
-      JwtSettings__Issuer = var.jwt_issuer
-      JwtSettings__Audience = var.jwt_audience
+      # Configuração JWT específica para Customer
+      JwtSettings__Secret = var.jwt_customer_secret
+      JwtSettings__Issuer = var.jwt_customer_issuer
+      JwtSettings__Audience = var.jwt_customer_audience
       # Connection string do RDS
       RDS_CONNECTION_STRING = var.rds_connection_string
     }

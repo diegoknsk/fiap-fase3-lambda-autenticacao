@@ -147,6 +147,9 @@ jobs:
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
+          -var="jwt_customer_secret=${{ secrets.JWT_CUSTOMER_SECRET }}" \
+          -var="jwt_customer_issuer=${{ secrets.JWT_CUSTOMER_ISSUER }}" \
+          -var="jwt_customer_audience=${{ secrets.JWT_CUSTOMER_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
@@ -160,6 +163,9 @@ jobs:
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
+          -var="jwt_customer_secret=${{ secrets.JWT_CUSTOMER_SECRET }}" \
+          -var="jwt_customer_issuer=${{ secrets.JWT_CUSTOMER_ISSUER }}" \
+          -var="jwt_customer_audience=${{ secrets.JWT_CUSTOMER_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \

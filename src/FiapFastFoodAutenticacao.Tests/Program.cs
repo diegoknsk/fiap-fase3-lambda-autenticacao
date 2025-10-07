@@ -23,14 +23,14 @@ class Program
 
         var authService = new AuthService();
         
-        // Configuração para o TokenService
+        // Configuração para o TokenService (usando configurações do Customer)
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettings:Secret"] = "FiapFastFoodSuperSecretKeyForJWTTokenGeneration2025!",
-                ["JwtSettings:Issuer"] = "FiapFastFood",
-                ["JwtSettings:Audience"] = "FiapFastFood",
-                ["JwtSettings:ExpirationHours"] = "3"
+                ["JwtSettings:Secret"] = "chave-ultra-secreta-para-o-projeto-fastfood1",
+                ["JwtSettings:Issuer"] = "FastFoodAuth",
+                ["JwtSettings:Audience"] = "FastFoodAPI-Customer",
+                ["JwtSettings:ExpirationHours"] = "2"
             })
             .Build();
             
