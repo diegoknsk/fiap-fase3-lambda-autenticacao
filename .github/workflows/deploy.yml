@@ -17,6 +17,7 @@ on:
       - '.github/workflows/deploy.yml'
       - 'build.ps1'
       - 'build.sh'
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       branch:
@@ -58,7 +59,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') || 
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.action != 'closed')
     
     steps:
     - name: Checkout code
@@ -143,6 +147,9 @@ jobs:
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
+          -var="jwt_customer_secret=${{ secrets.JWT_CUSTOMER_SECRET }}" \
+          -var="jwt_customer_issuer=${{ secrets.JWT_CUSTOMER_ISSUER }}" \
+          -var="jwt_customer_audience=${{ secrets.JWT_CUSTOMER_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
@@ -156,6 +163,9 @@ jobs:
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="jwt_issuer=${{ secrets.JWT_ISSUER }}" \
           -var="jwt_audience=${{ secrets.JWT_AUDIENCE }}" \
+          -var="jwt_customer_secret=${{ secrets.JWT_CUSTOMER_SECRET }}" \
+          -var="jwt_customer_issuer=${{ secrets.JWT_CUSTOMER_ISSUER }}" \
+          -var="jwt_customer_audience=${{ secrets.JWT_CUSTOMER_AUDIENCE }}" \
           -var="aws_region=${{ vars.AWS_REGION }}" \
           -var="admin_password_permanent=${{ secrets.TF_VAR_admin_password_permanent }}" \
           -var="create_lambda=${{ env.LAMBDA_EXISTS == 'false' }}" \
@@ -243,7 +253,7 @@ jobs:
         fi
 
     - name: Comment PR with deployment info
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && github.event.action != 'closed'
       uses: actions/github-script@v7
       with:
         script: |
@@ -253,7 +263,7 @@ jobs:
           
           ### Próximos passos:
           - ✅ Build concluído
-          - ⏳ Deploy será executado após merge para main
+          - ⏳ Deploy será executado **apenas** após merge para main
           - 🚀 Lambda será atualizado automaticamente
           
           ### Endpoints que estarão disponíveis após deploy:
@@ -262,6 +272,8 @@ jobs:
           - \`POST /api/customer/register\` - Registrar Customer
           - \`POST /api/customer/anonymous\` - Registrar Customer Anônimo
           - \`GET /swagger\` - Documentação Swagger
+          
+          **Nota:** O deploy só acontece quando o PR é mergeado para main, evitando execuções duplicadas.
           `;
           
           github.rest.issues.createComment({

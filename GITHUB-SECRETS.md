@@ -59,6 +59,25 @@ JWT_AUDIENCE
 - **Descrição:** Audience para JWT tokens
 - **Exemplo:** `FiapFastFood`
 
+#### **JWT Configuration para Customer**
+```
+JWT_CUSTOMER_SECRET
+```
+- **Descrição:** Secret para geração de JWT tokens do Customer
+- **Exemplo:** `chave-ultra-secreta-para-o-projeto-fastfood1`
+
+```
+JWT_CUSTOMER_ISSUER
+```
+- **Descrição:** Issuer para JWT tokens do Customer
+- **Exemplo:** `FastFoodAuth`
+
+```
+JWT_CUSTOMER_AUDIENCE
+```
+- **Descrição:** Audience para JWT tokens do Customer
+- **Exemplo:** `FastFoodAPI-Customer`
+
 ## 🎓 AWS Academy - Configuração Especial
 
 ### **⚠️ Importante para AWS Academy:**

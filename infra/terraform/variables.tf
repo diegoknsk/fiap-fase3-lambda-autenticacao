@@ -40,6 +40,26 @@ variable "jwt_audience" {
   default     = "FiapFastFood"
 }
 
+# Variáveis específicas para JWT do Customer
+variable "jwt_customer_secret" {
+  description = "Secret para geração de JWT tokens do Customer"
+  type        = string
+  sensitive   = true
+  default     = "chave-ultra-secreta-para-o-projeto-fastfood1"
+}
+
+variable "jwt_customer_issuer" {
+  description = "Issuer para JWT tokens do Customer"
+  type        = string
+  default     = "FastFoodAuth"
+}
+
+variable "jwt_customer_audience" {
+  description = "Audience para JWT tokens do Customer"
+  type        = string
+  default     = "FastFoodAPI-Customer"
+}
+
 variable "lab_role_arn" {
   description = "ARN da LabRole da AWS Academy"
   type        = string
